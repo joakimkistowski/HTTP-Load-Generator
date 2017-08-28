@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tools.descartes.dlim:Sequence xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:tools.descartes.dlim="http://descartes.tools/dlim/0.1" name="linearIncrease" terminateAfterLoops="1" firstIterationEnd="60.0" loopDuration="60.0" finalDuration="60.0">
+  <sequenceFunctionContainers name="increasingSeasonal" duration="60.0" firstIterationEnd="60.0">
+    <function xsi:type="tools.descartes.dlim:LinearTrend" functionOutputAtEnd="157113.038961039"/>
+  </sequenceFunctionContainers>
+</tools.descartes.dlim:Sequence>
