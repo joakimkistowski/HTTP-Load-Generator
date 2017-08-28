@@ -5,11 +5,11 @@ The HTTP Load Generator is a load generator designed to generate HTTP loads with
 The HTTP Load Generator tool can be run in two modes: As director and as load generator. The director mode starts the tool in a mode where it parses necessary profiles and scripts, connects to power measurement devices, and collects data. The load generator mode receives instructions from the director and generates the actual requests. The mode is set using command line switches, which means that two instances of the HTTP Load Generator must be running for a test, one in each mode.
 
 Structure of this README:
-1. [Features and Application Scenarios](#1-Features-and-Application-Scenarios)
-2. [Getting Started with the Load Generator](#2-Getting-Started-with-the-Load-Generator)
-3. [Creating Custom Request Profies](#3-Creating-Custom-Request-Profies)
-4. [Using Power Daemons](#4-Using-Power-Daemons)
-5. [All Command Line Switches](#5-All-Command-Line-Switches)
+1. [Features and Application Scenarios](#1-features-and-application-scenarios)
+2. [Getting Started with the Load Generator](#2-getting-started-with-the-load-generator)
+3. [Creating Custom Request Profies](#3-creating-custom-request-profies)
+4. [Using Power Daemons](#4-using-power-daemons)
+5. [All Command Line Switches](#5-all-command-line-switches)
 
 ## 1. Features and Application Scenarios
 
