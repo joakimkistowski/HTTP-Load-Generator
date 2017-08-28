@@ -18,7 +18,7 @@ Structure of this README:
 The load generator has the following three primary features:
 1. Generation of loads with a varying load intensity (number of requests per second).
 2. Generation of loads with context sensitive requests that can be scripted to be dependent on previous responses.
-3. An infrastructure that allows for collection of powre measurements from external measurement devices (optional).
+3. An infrastructure that allows for collection of power measurements from external measurement devices (optional).
 
 The load generator can be used for testing of web applications regarding testing of energy efficiency, testing of scaling behavior over time and testing of time-dependent scenarios, such as the effect of sudden bursts, seasonal variations in request patterns, trends, etc.
 
@@ -30,7 +30,7 @@ First build or download the [httploadgenetor.jar](https://se2.informatik.uni-wue
 
 In addition to the jar, you need a load intensity profile and a LUA script for generating the actual requests. We provide an example for each in the examplefiles directory:
 * [Example Load Intensity Profile](https://github.com/joakimkistowski/HTTP-Load-Generator/tree/master/examplefiles/curveArrivalRates.csv): An example load intensity profile that runs for a minute. its arrival rate increases for 30 seconds before decreasing again in a sinoid shape.
-* [Example Minimal Request Generation LUA Script](https://github.com/joakimkistowski/HTTP-Load-Generator/tree/master/examplefiles/http_calls_minimal.lua): A minimal example script for generating requests. Alternates between calls on index.html and index.htm. For a more complex example see [here](https://github.com/joakimkistowski/HTTP-Load-Generator/tree/master/examplefiles/http_calls_dvd.lua). This secnd scripts specifies calls for the Dell DVD Store. However, use the minimal script for now, bacouse it is far easier to run with almost any web application.
+* [Example Minimal Request Generation LUA Script](https://github.com/joakimkistowski/HTTP-Load-Generator/tree/master/examplefiles/http_calls_minimal.lua): A minimal example script for generating requests. Alternates between calls on index.html and index.htm. For a more complex example see [here](https://github.com/joakimkistowski/HTTP-Load-Generator/tree/master/examplefiles/http_calls_dvd.lua). This second scripts specifies calls for the Dell DVD Store. However, use the minimal script for now. It is far easier to run with almost any web application.
 
 Download both files and place them on the director machine. For simplicity, we will assume that you place them in the same directory as the _httploadgenerator.jar_. You would now also modify the LUA script with calls for your web application. For the minimal example, just make sure that index.html and index.htm are accessible and enter the adress of your server hosting the web application in line 7 of the script.
 
