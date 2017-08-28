@@ -1,5 +1,7 @@
 # HTTP Load Generator
 
+Download the binary [here](https://se2.informatik.uni-wuerzburg.de/files/httploadgenerator.jar).
+
 The HTTP Load Generator is a load generator designed to generate HTTP loads with varying load intensities. It uses load intensity specifications as specified by [LIMBO](http://descartes.tools/limbo) to generate loads that vary in intensity (number of requests per second) over time. The load generator logs application level data and supports connecting to external power measurement daemons. It specifies the http requests themselves using LUA scripts, which are read at run-time.
 
 The HTTP Load Generator tool can be run in two modes: As director and as load generator. The director mode starts the tool in a mode where it parses necessary profiles and scripts, connects to power measurement devices, and collects data. The load generator mode receives instructions from the director and generates the actual requests. The mode is set using command line switches, which means that two instances of the HTTP Load Generator must be running for a test, one in each mode.
@@ -22,7 +24,7 @@ The load generator can be used for testing of web applications regarding testing
 
 ## 2. Getting Started with the Load Generator
 
-First build or download the httploadgenetor.jar (TODO). Deploy the httploadgenerator on two machines:
+First build or download the [httploadgenetor.jar](https://se2.informatik.uni-wuerzburg.de/files/httploadgenerator.jar). Deploy the httploadgenerator on two machines:
 1. The **director machine** (experiment controller): Usually your PC. This machine must have access to the load profile and request script to be run. In addition this machine must be able to communicate with the power meters (optional).
 2. The **load generator machine**: The machine that sends the network loads. Usually a quite powerful machine. No additional files, except for the jar itself, are required on this machine.
 
@@ -38,7 +40,7 @@ Now, on the **load generator machine** start the HTTP Load Generator in load gen
 
 Next, on the **director machine** start the HTTP Load Generator in director mode:
 
-    $ java -jar .\httploadgenerator.jar -d -s IP_OF_THE_LOAD_GENERATOR_MACHINE -a curveArrivalRates.csv -o testlog.csv -r 5 -l .\http_calls_minimal.lua
+    $ java -jar httploadgenerator.jar -d -s IP_OF_THE_LOAD_GENERATOR_MACHINE -a curveArrivalRates.csv -o testlog.csv -r 5 -l http_calls_minimal.lua
 
 The director call does the following:
 * _-d_ starts the director mode.
