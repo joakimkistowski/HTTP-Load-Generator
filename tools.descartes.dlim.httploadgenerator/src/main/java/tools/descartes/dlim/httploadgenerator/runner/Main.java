@@ -86,11 +86,12 @@ public class Main extends Thread {
 	private static void printHelp() {
 		System.out.println("Welcome to LIMBO HTTP Load Generator");
 		System.out.println("Usage:");
-		System.out.println("   java -jar httploadgenerator.jar [-d|-g|-h [optional params]]");
+		System.out.println("   java -jar httploadgenerator.jar [-d|-l|-h [optional params]]");
 		System.out.println("Example:");
 		System.out.println(
 				"   java -jar httploadgenerator.jar -d -s 192.168.0.201 "
-						+ "-a ./arrivalRates/test.txt -o myLog.csv -p 127.0.0.1:8888");
+						+ "-a ./arrivalRates/test.txt -o myLog.csv -p 127.0.0.1:8888 "
+						+ "-c tools.descartes.dlim.httploadgenerator.power.TMCTLDCommunicator -l ./http_calls.lua");
 		System.out.println("");
 		System.out.println("Primary parameters (pick one):");
 		System.out.println(
@@ -99,7 +100,7 @@ public class Main extends Thread {
 		System.out.println("   \"-h\": this \'h\'elp page.");
 		System.out.println("");
 		System.out.println("Secondary parameters for director (optional):");
-		System.out.println("Missing parameters will cause the director to prompt for the data.");
+		System.out.println("Missing parameters may cause the director to prompt for the data.");
 		System.out.println("   \"-s [ip]\": Adre\'s\'s of load generator.");
 		System.out.println("   \"-p [ip[:port]]\": Adress of \'p\'owerDaemon. No address => no power measurements.");
 		System.out.println("   \"-a [path]\": Path of LIMBO-generated \'a\'rrival rate file.");
