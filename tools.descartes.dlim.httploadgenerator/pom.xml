@@ -22,13 +22,6 @@
 			<artifactId>luaj-jse</artifactId>
 			<version>3.0.1</version>
 		</dependency>
-
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.12</version>
-			<scope>test</scope>
-		</dependency>
 	</dependencies>
 	<build>
 		<plugins>
@@ -56,6 +49,8 @@
 					<descriptorRefs>
 						<descriptorRef>jar-with-dependencies</descriptorRef>
 					</descriptorRefs>
+					<finalName>httploadgenerator</finalName>
+					<appendAssemblyId>false</appendAssemblyId>
 				</configuration>
 				<executions>
 					<execution>
@@ -67,6 +62,6 @@
 				</executions>
 			</plugin>
 		</plugins>
-		<finalName>httploadgenerator</finalName>
+		<finalName>httploadgenerator-single</finalName>
 	</build>
 </project>

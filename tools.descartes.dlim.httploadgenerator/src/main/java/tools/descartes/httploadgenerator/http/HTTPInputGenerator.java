@@ -119,4 +119,20 @@ public class HTTPInputGenerator {
 	public CookieManager getCookieManager() {
 		return cookieManager;
 	}
+	
+	/**
+	 * Get the last call that was generated on calling {@link #getNextInput()}.
+	 * @return The last call URL.
+	 */
+	public String getLastCall() {
+		return lastInput;
+	}
+	
+	/**
+	 * Get the current HTML content that was last received using this generator.
+	 * @return The HTML content.
+	 */
+	public String getCurrentHTML() {
+		return htmlFunctions.getHTML();
+	}
 }
