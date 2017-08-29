@@ -88,13 +88,23 @@ You can parse the HTTP response in the _onCall_ function using regular expressio
 * _html.extractMatches( prefixRegex, postfixRegex )_ : Returns all matches that are preceeded by a prefixRegex match and followed by a postfixRegex match. The regexes must have one unique match for each line in which they apply.
 * _html.extractMatches( prefixRegex, matchingRegex, postfixRegex )_ : Variant of extractMatches with a matching regex defining the string that is to be extracted.
 
-Note that all regular expressions are passed directly to the Java backend. They must be specified, as if they were specified directly in the Java code. I.e., use "\\" instead of a single "\".
+Note that all regular expressions are passed directly to the Java backend. They must be specified, as if they were specified directly in the Java code. I.e., use "\\\\" instead of a single "\\".
 
 URLs returned by _onCall_ are called using HTTP GET. To send a HTTP POST request, prepend _[POST]_ (including the brackets) before the returned URL.
 
 You can test your LUA scripts using our HTTP Script Tester ([download the binary here](https://se2.informatik.uni-wuerzburg.de/files/httpscripttester.jar)). The HTTP Script Tester is a graphical application that runs the script and renders HTML responses in a graphical web view to check for correct functionality of the script.
 
 ## 4. Using Power Daemons
+
+The HTTP Load Generator supports connecting to power analyzer daemons. The general idea behind the infrastructure is to connect to a network daemon that may run on a separate machine with the power analyzer. Unfortunately, most power analyzer daemons, such as the SPEC PTDaemon, have restrictive licenses, prohibiting their use with the HTTP Load Generator or preventing us from providing them to you.
+
+We provide a **IPowerCommunicator** interface in the _tools.descartes.dlim.httploadgenerator.power_ package. Implement your own power daemon communicator against this interface. The _TMCTLDCommunicator_ can be used as an example implementation.
+
+To start the HTTP Load Generator with your power communicator, add it to the classpath and then specify the fully quailified class name of your communicator using the _-c_ switch of the HTTP Load Generator in director mode. Use the _-p_ switch to specify the network address of your power daemon.
+
+Example:
+
+    $ java -jar httploadgenerator.jar -d -s LOADGENIP -a myArrivalRates.csv -o myLog.csv -p PWRRDAEEMONIP:PWRDAEMONPORT -c my.fully.qualified.Classname -l./http_calls.lua
 
 ## 5. All Command Line Switches
 
