@@ -85,7 +85,7 @@ Two LUA functions in the script are called from by HTTP Load Generator:
 
 You can parse the HTTP response in the _onCall_ function using regular expressions. We provide HTML helper functions (considering the response is usually html). Specifically, we offer:
 * _html.getMatches( regex )_ : Returns all lines in the returned text stream that match a provided regex.
-* _html.extractMatches( prefixRegex, postfixRegex )_ : Returns all matches that are preceeded by a prefixRegex match and followed by a postfixRegex match. The regexes must one unique match for each line in which they apply.
+* _html.extractMatches( prefixRegex, postfixRegex )_ : Returns all matches that are preceeded by a prefixRegex match and followed by a postfixRegex match. The regexes must have one unique match for each line in which they apply.
 * _html.extractMatches( prefixRegex, matchingRegex, postfixRegex )_ : Variant of extractMatches with a matching regex defining the string that is to be extracted.
 
 Note that all regular expressions are passed directly to the Java backend. They must be specified, as if they were specified directly in the Java code. I.e., use "\\" instead of a single "\".
@@ -102,7 +102,7 @@ Use the _-h_ switch to show the following help page:
 
 Usage:
 
-    $ java -jar httploadgenerator.jar [-d|-g|-h [optional params]]
+    $ java -jar httploadgenerator.jar [-d|-l|-h [optional params]]
    
 Example:
 
