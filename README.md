@@ -92,7 +92,11 @@ Note that all regular expressions are passed directly to the Java backend. They 
 
 URLs returned by _onCall_ are called using HTTP GET. To send a HTTP POST request, prepend _[POST]_ (including the brackets) before the returned URL.
 
-You can test your LUA scripts using our HTTP Script Tester ([download the binary here](https://se2.informatik.uni-wuerzburg.de/files/httpscripttester.jar)). The HTTP Script Tester is a graphical application that runs the script and renders HTML responses in a graphical web view to check for correct functionality of the script.
+You can test your LUA scripts using our HTTP Script Tester ([download the binary here](https://se2.informatik.uni-wuerzburg.de/files/httpscripttester.jar)). The HTTP Script Tester is a graphical application that runs the script and renders HTML responses in a graphical web view to check for correct functionality of the script. Lauch the script tester using your graphical user interface or using the following command line:
+
+    $ java -jar httpscripttester.jar ./MYSCRIPTFILE.lua
+
+We recommend a command line lauch, as the command line in the background will show potential errors and LUA _print_ statements, which is very helpful when debugging.
 
 ## 4. Using Power Daemons
 
