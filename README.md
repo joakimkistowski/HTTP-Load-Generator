@@ -52,7 +52,7 @@ The director call does the following:
 
 The director will now connect with the load generator, send the load intensity profile, script, and other settings. It will then prompt you to press enter to start the test. Once the test has concluded, the output log file will appear in the directory.
 
-## 3. Creating Custom Request Profies
+## 3. Creating Custom Request Profiles
 
 Since you don't always want to be running our example profiles, you can specify your own. We specify the load intensity (arrival rate) and the requests separately in separate files.
 
