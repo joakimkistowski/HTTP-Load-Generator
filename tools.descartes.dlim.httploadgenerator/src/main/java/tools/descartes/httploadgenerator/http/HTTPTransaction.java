@@ -80,31 +80,24 @@ public class HTTPTransaction extends Transaction {
 			
 			//store result
 			String html = response.toString();
-			generator.resetHTMLFunctions(html);
+			if (con.getResponseCode() >= 400) {
+				generator.revertLastCall();
+				LOG.info("Received error response code: " + con.getResponseCode() + " : " + con.getResponseMessage());
+			} else {
+				generator.resetHTMLFunctions(html);
+			}
+			
 			return response.toString();
 
 		} catch (MalformedURLException e) {
 			LOG.log(Level.SEVERE, "Malformed URL: " + url);
+			generator.revertLastCall();
 		} catch (ProtocolException e) {
 			LOG.log(Level.SEVERE, "ProtocolException: " + e.getLocalizedMessage());
+			generator.revertLastCall();
 		} catch (IOException e) {
-			LOG.log(Level.SEVERE, "General IO Exception Occured with Input: " + url);
-			e.printStackTrace();
-			
-			in = new BufferedReader(
-					new InputStreamReader(con.getErrorStream()));
-			String inputLine;
-			try {
-				StringBuilder messageBuilder = new StringBuilder("Error Response:\n\n");
-				while ((inputLine = in.readLine()) != null) {
-					messageBuilder.append(inputLine);
-					messageBuilder.append("\n");
-				}
-				messageBuilder.append("\n");
-				LOG.log(Level.INFO, messageBuilder.toString());
-			} catch (IOException e1) {
-				e1.printStackTrace();
-			}
+			LOG.log(Level.SEVERE, "General IO Exception Occured with Input @ " + url + ": " + e.getLocalizedMessage());
+			generator.revertLastCall();
 		} finally {
 			try {
 				in.close();

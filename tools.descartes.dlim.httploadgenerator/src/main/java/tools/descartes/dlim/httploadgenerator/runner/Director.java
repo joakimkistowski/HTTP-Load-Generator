@@ -268,6 +268,10 @@ public class Director extends Thread {
 		if (powerCommunicator != null) {
 			power = powerCommunicator.getPowerMeasurement();
 		}
+		String[] tokens = generatorLine.trim().split(",");
+		System.out.println("Target Time = " + tokens[0]
+				+ "; Load Intensity = " + tokens[1]
+				+ "; Throughput = " + tokens[2]);
 		writer.println(generatorLine.trim() + "," + power);
 	}
 

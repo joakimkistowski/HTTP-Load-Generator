@@ -135,4 +135,12 @@ public class HTTPInputGenerator {
 	public String getCurrentHTML() {
 		return htmlFunctions.getHTML();
 	}
+	
+	/**
+	 * Decrements the last call number. Use this after an unsuccessful call
+	 * in order to be repeat it on the next call of {@link #getNextInput()}.
+	 */
+	public void revertLastCall() {
+		currentCallNum--;
+	}
 }
