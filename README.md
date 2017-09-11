@@ -52,7 +52,7 @@ The director call does the following:
 
 The director will now connect with the load generator, send the load intensity profile, script, and other settings. It will then prompt you to press enter to start the test. Once the test has concluded, the output log file will appear in the directory.
 
-## 3. Creating Custom Request Profies
+## 3. Creating Custom Request Profiles
 
 Since you don't always want to be running our example profiles, you can specify your own. We specify the load intensity (arrival rate) and the requests separately in separate files.
 
@@ -92,7 +92,11 @@ Note that all regular expressions are passed directly to the Java backend. They 
 
 URLs returned by _onCall_ are called using HTTP GET. To send a HTTP POST request, prepend _[POST]_ (including the brackets) before the returned URL.
 
-You can test your LUA scripts using our HTTP Script Tester ([download the binary here](https://se2.informatik.uni-wuerzburg.de/files/httpscripttester.jar)). The HTTP Script Tester is a graphical application that runs the script and renders HTML responses in a graphical web view to check for correct functionality of the script.
+You can test your LUA scripts using our HTTP Script Tester ([download the binary here](https://se2.informatik.uni-wuerzburg.de/files/httpscripttester.jar)). The HTTP Script Tester is a graphical application that runs the script and renders HTML responses in a graphical web view to check for correct functionality of the script. Lauch the script tester using your graphical user interface or using the following command line:
+
+    $ java -jar httpscripttester.jar ./MYSCRIPTFILE.lua
+
+We recommend a command line lauch, as the command line in the background will show potential errors and LUA _print_ statements, which is very helpful when debugging.
 
 ## 4. Using Power Daemons
 
