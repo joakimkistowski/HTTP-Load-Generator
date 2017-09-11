@@ -39,9 +39,6 @@ public class Main extends Thread {
 	/** The constant logging instance. */
 	private static final Logger LOG = Logger.getLogger(Main.class.getName());
 
-	/** Variable for validating result of the transactions. */
-	private static volatile boolean valid = true;
-
 	/**
 	 * Main method for splitting up passed arguments and starting corresponding
 	 * mode.
@@ -130,25 +127,6 @@ public class Main extends Thread {
 		if (!key.isEmpty()) {
 			map.put(key, params.trim());
 		}
-	}
-
-	/**
-	 * Method for setting the result of the transaction to a new value.
-	 * 
-	 * @param isValid
-	 *            Parameter for setting the result to true or false
-	 */
-	public static void setValid(boolean isValid) {
-		valid = valid && isValid;
-	}
-
-	/**
-	 * Method for getting the result of the transaction.
-	 * 
-	 * @return Boolean result of the transaction
-	 */
-	public static boolean getValid() {
-		return valid;
 	}
 
 	/**

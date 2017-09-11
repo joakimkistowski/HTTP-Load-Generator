@@ -221,7 +221,7 @@ public class Director extends Thread {
 				parentPath = ".";
 			}
 			PrintWriter writer = new PrintWriter(parentPath + "/" + outName);
-			writer.print("Target Time,Load Intensity,Throughput,Final Batch Dispatch Time,Watts");
+			writer.print("Target Time,Load Intensity,Throughput (Valid Transactions / s),Invalid Transactions,Final Batch Dispatch Time,Watts");
 
 			System.out.print("Press Enter to begin Execution");
 			outName = scanner.nextLine();
@@ -271,7 +271,8 @@ public class Director extends Thread {
 		String[] tokens = generatorLine.trim().split(",");
 		System.out.println("Target Time = " + tokens[0]
 				+ "; Load Intensity = " + tokens[1]
-				+ "; Throughput = " + tokens[2]);
+				+ "; Throughput = " + tokens[2]
+				+ "; Invalid Transactions = " + tokens[3]);
 		writer.println(generatorLine.trim() + "," + power);
 	}
 

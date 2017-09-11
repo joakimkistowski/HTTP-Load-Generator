@@ -26,8 +26,8 @@ import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import tools.descartes.dlim.httploadgenerator.runner.Main;
 import tools.descartes.dlim.httploadgenerator.runner.TransactionQueueSingleton;
+import tools.descartes.dlim.httploadgenerator.runner.ValidityTracker;
 import tools.descartes.dlim.httploadgenerator.runner.Transaction;
 
 /**
@@ -71,7 +71,7 @@ public class HTTPTransaction extends Transaction {
 			
 			if (con.getResponseCode() >= 400) {
 				generator.revertLastCall();
-				LOG.info("Received error response code: " + con.getResponseCode() + " : " + con.getResponseMessage());
+				LOG.info("Received error response code: " + con.getResponseCode());
 			} else {
 				in = new BufferedReader(
 						new InputStreamReader(con.getInputStream()));
@@ -115,9 +115,11 @@ public class HTTPTransaction extends Transaction {
 	@Override
 	public void run() {
 		HTTPInputGenerator generator = HTTPInputGeneratorPool.getPool().takeFromPool();
-		this.process(generator);
+		String response = this.process(generator);
 		HTTPInputGeneratorPool.getPool().releaseBackToPool(generator);
-		Main.setValid(true);
+		if (response == null) {
+			ValidityTracker.TRACKER.incrementInvalidTransctionCount();
+		}
 		TransactionQueueSingleton transactionQueue = TransactionQueueSingleton.getInstance();
 		transactionQueue.addQueueElement(this);
 	}

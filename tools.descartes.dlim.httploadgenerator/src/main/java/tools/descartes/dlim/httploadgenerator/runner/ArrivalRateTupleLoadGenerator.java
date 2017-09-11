@@ -161,7 +161,7 @@ public class ArrivalRateTupleLoadGenerator extends AbstractLoadGenerator {
 				nextTimeStamp += 1000;
 			}
 			LOG.log(Level.INFO, "Workload finished, " + executor.getCompletedTaskCount() + " Tasks executed.");
-			LOG.log(Level.INFO, "Validation Result: " + Main.getValid());
+			LOG.log(Level.INFO, "Invalid Transactions: " + ValidityTracker.TRACKER.getTotalInvalidTransactionCount());
 			executor.shutdown();
 
 		} catch (InterruptedException e) {
@@ -178,7 +178,8 @@ public class ArrivalRateTupleLoadGenerator extends AbstractLoadGenerator {
 	 */
 	private void sendBatchDataToDirector(double targettime, int loadintensity, double actualtime) {
 		long currentCompletedCount = executor.getCompletedTaskCount();
-		sendToDirector(targettime, loadintensity, (currentCompletedCount - lastCompletedCount), actualtime);
+		sendToDirector(targettime, loadintensity, (currentCompletedCount - lastCompletedCount),
+				ValidityTracker.TRACKER.getAndResetInvalidTransactionCount(), actualtime);
 		lastCompletedCount = currentCompletedCount;
 	}
 
