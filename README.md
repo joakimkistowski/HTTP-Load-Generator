@@ -1,6 +1,6 @@
 # HTTP Load Generator
 
-Download the binary [here](https://se2.informatik.uni-wuerzburg.de/files/httploadgenerator.jar).
+Download the binary [here](https://se3.informatik.uni-wuerzburg.de/httploadgenerator/tools.descartes.dlim.httploadgenerator/target/httploadgenerator.jar).
 
 The HTTP Load Generator is a load generator designed to generate HTTP loads with varying load intensities. It uses load intensity specifications as specified by [LIMBO](http://descartes.tools/limbo) to generate loads that vary in intensity (number of requests per second) over time. The load generator logs application level data and supports connecting to external power measurement daemons. It specifies the http requests themselves using LUA scripts, which are read at run-time.
 
@@ -24,7 +24,7 @@ The load generator can be used for testing of web applications regarding testing
 
 ## 2. Getting Started with the Load Generator
 
-First build or download the [httploadgenetor.jar](https://se2.informatik.uni-wuerzburg.de/files/httploadgenerator.jar). Deploy the httploadgenerator on two machines:
+First build or download the [httploadgenetor.jar](https://se3.informatik.uni-wuerzburg.de/httploadgenerator/tools.descartes.dlim.httploadgenerator/target/httploadgenerator.jar). Deploy the httploadgenerator on two machines:
 1. The **director machine** (experiment controller): Usually your PC. This machine must have access to the load profile and request script to be run. In addition this machine must be able to communicate with the power meters (optional, we are not using a power meter in this _getting started_ section).
 2. The **load generator machine**: The machine that sends the network loads. Usually a quite powerful machine. No additional files, except for the jar itself, are required on this machine.
 
@@ -92,7 +92,7 @@ Note that all regular expressions are passed directly to the Java backend. They 
 
 URLs returned by _onCall_ are called using HTTP GET. To send a HTTP POST request, prepend _[POST]_ (including the brackets) before the returned URL.
 
-You can test your LUA scripts using our HTTP Script Tester ([download the binary here](https://se2.informatik.uni-wuerzburg.de/files/httpscripttester.jar)). The HTTP Script Tester is a graphical application that runs the script and renders HTML responses in a graphical web view to check for correct functionality of the script. Lauch the script tester using your graphical user interface or using the following command line:
+You can test your LUA scripts using our HTTP Script Tester ([download the binary here](https://se3.informatik.uni-wuerzburg.de/httploadgenerator/tools.descartes.dlim.httpscripttester/target/httpscripttester.jar)). The HTTP Script Tester is a graphical application that runs the script and renders HTML responses in a graphical web view to check for correct functionality of the script. Lauch the script tester using your graphical user interface or using the following command line:
 
     $ java -jar httpscripttester.jar ./MYSCRIPTFILE.lua
 
