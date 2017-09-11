@@ -71,7 +71,7 @@ public class HTTPTransaction extends Transaction {
 			
 			if (con.getResponseCode() >= 400) {
 				generator.revertLastCall();
-				LOG.info("Received error response code: " + con.getResponseCode());
+				LOG.log(Level.FINEST, "Received error response code: " + con.getResponseCode());
 			} else {
 				in = new BufferedReader(
 						new InputStreamReader(con.getInputStream()));
