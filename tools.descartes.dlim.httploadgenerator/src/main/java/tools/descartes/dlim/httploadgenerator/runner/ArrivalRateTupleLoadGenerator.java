@@ -178,8 +178,10 @@ public class ArrivalRateTupleLoadGenerator extends AbstractLoadGenerator {
 	 */
 	private void sendBatchDataToDirector(double targettime, int loadintensity, double actualtime) {
 		long currentCompletedCount = executor.getCompletedTaskCount();
-		sendToDirector(targettime, loadintensity, (currentCompletedCount - lastCompletedCount),
-				ValidityTracker.TRACKER.getAndResetInvalidTransactionCount(), actualtime);
+		long invalidTransactionCount = ValidityTracker.TRACKER.getAndResetInvalidTransactionCount();
+		sendToDirector(targettime, loadintensity,
+				(currentCompletedCount - lastCompletedCount - invalidTransactionCount),
+				invalidTransactionCount, actualtime);
 		lastCompletedCount = currentCompletedCount;
 	}
 
