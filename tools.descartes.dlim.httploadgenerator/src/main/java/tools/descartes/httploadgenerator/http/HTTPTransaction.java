@@ -68,26 +68,25 @@ public class HTTPTransaction extends Transaction {
 
 			con.setRequestMethod(method);
 			con.setRequestProperty("User-Agent", USER_AGENT);
-
-			in = new BufferedReader(
-					new InputStreamReader(con.getInputStream()));
-			String inputLine;
-			StringBuffer response = new StringBuffer();
-
-			while ((inputLine = in.readLine()) != null) {
-				response.append(inputLine + "\n");
-			}			
 			
-			//store result
-			String html = response.toString();
 			if (con.getResponseCode() >= 400) {
 				generator.revertLastCall();
 				LOG.info("Received error response code: " + con.getResponseCode() + " : " + con.getResponseMessage());
 			} else {
+				in = new BufferedReader(
+						new InputStreamReader(con.getInputStream()));
+				String inputLine;
+				StringBuffer response = new StringBuffer();
+
+				while ((inputLine = in.readLine()) != null) {
+					response.append(inputLine + "\n");
+				}			
+				
+				//store result
+				String html = response.toString();
 				generator.resetHTMLFunctions(html);
+				return response.toString();
 			}
-			
-			return response.toString();
 
 		} catch (MalformedURLException e) {
 			LOG.log(Level.SEVERE, "Malformed URL: " + url);
@@ -100,11 +99,15 @@ public class HTTPTransaction extends Transaction {
 			generator.revertLastCall();
 		} finally {
 			try {
-				in.close();
+				if (in != null) {
+					in.close();
+				}
 			} catch (IOException e) {
-				e.printStackTrace();
+				LOG.log(Level.SEVERE, "General IO Exception closing message reader.");
 			}
-			con.disconnect();
+			if (con != null) {
+				con.disconnect();
+			}
 		}
 		return null;
 	}
