@@ -41,6 +41,6 @@
 
 	<modules>
 		<module>./tools.descartes.dlim.httploadgenerator</module>
-		<module>./tools.descartes.dlim.httploadgenerator</module>
+		<module>./tools.descartes.dlim.httpscripttester</module>
 	</modules>
 </project>
