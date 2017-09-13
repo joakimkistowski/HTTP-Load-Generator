@@ -42,7 +42,7 @@ public final class HTTPInputGeneratorPool {
 		 // We place an extra input generator in the pool, just to be safe.
 		for (int i = 0; i < threadCount + 1; i++) {
 			try {
-				queue.put(new HTTPInputGenerator(script));
+				queue.put(new HTTPInputGenerator(script, i));
 			} catch (InterruptedException e) {
 				LOG.severe("Interrupted initializing Queue.");
 			}

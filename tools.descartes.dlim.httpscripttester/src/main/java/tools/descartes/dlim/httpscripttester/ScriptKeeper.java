@@ -38,7 +38,8 @@ public class ScriptKeeper {
 	 * @param scriptPath The path of the LUA script.
 	 */
 	public ScriptKeeper(String scriptPath) {
-		generator = new HTTPInputGenerator(new File(scriptPath));
+		//we use 5 as the random seed for testing
+		generator = new HTTPInputGenerator(new File(scriptPath), 5);
 		transaction = new HTTPTransaction();
 	}
 	

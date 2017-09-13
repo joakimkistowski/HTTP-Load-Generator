@@ -51,8 +51,9 @@ public class HTTPInputGenerator {
 	 * callnum begins at 1 (Lua convention) and increments for each call. It resets back to 1
 	 * if onCall returns nil.
 	 * @param scriptFile The url generator script.
+	 * @param randomSeed Seed for Lua random function.
 	 */
-	public HTTPInputGenerator(File scriptFile) {
+	public HTTPInputGenerator(File scriptFile, int randomSeed) {
 		if (scriptFile != null) {
 			luaGlobals = JsePlatform.standardGlobals();
 			//luaGlobals.get("require").call(LuaValue.valueOf("tools.descartes.httploadgenerator.http.lua.HTML"));
