@@ -62,6 +62,8 @@ public abstract class AbstractLoadGenerator extends Thread {
 	 */
 	private PrintWriter out;
 
+	private int timeout = -1;
+	
 	/**
 	 * Constant command String to indicate that a load profile is being sent via
 	 * network. E.g. "dlim" for arrival rate tuples and "timestaps" for request
@@ -158,6 +160,14 @@ public abstract class AbstractLoadGenerator extends Thread {
 						}
 						ok();
 					}
+				} else if (line.startsWith(IRunnerConstants.TIMEOUT_KEY)) {
+					try {
+						int timeout = Integer.parseInt(line.split(":")[1].trim());
+						this.timeout = timeout;
+					} catch (IndexOutOfBoundsException | NumberFormatException e) {
+						LOG.log(Level.WARNING, "Invalid timeout.");
+					}
+					ok();
 				} else if (line.startsWith(IRunnerConstants.SCRIPT_SEND_KEY)) {
 					receiveScript(in);
 					LOG.info("Received LUA script.");
@@ -306,5 +316,13 @@ public abstract class AbstractLoadGenerator extends Thread {
 	 */
 	protected String getScriptPath() {
 		return TMP_SCRIPT_PATH;
+	}
+	
+	/**
+	 * Get the http url connection read timout.
+	 * @return The timout.
+	 */
+	public int getTimeout() {
+		return timeout;
 	}
 }

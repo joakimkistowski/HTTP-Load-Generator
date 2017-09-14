@@ -66,6 +66,9 @@ public class HTTPTransaction extends Transaction {
 			obj = new URL(url);
 			con = (HttpURLConnection) obj.openConnection();
 
+			if (generator.getTimeout() > 0) {
+				con.setReadTimeout(generator.getTimeout());
+			}
 			con.setRequestMethod(method);
 			con.setRequestProperty("User-Agent", USER_AGENT);
 			
@@ -93,6 +96,8 @@ public class HTTPTransaction extends Transaction {
 			generator.revertLastCall();
 		} catch (ProtocolException e) {
 			LOG.log(Level.SEVERE, "ProtocolException: " + e.getMessage());
+			generator.revertLastCall();
+		} catch (java.net.SocketTimeoutException e) {
 			generator.revertLastCall();
 		} catch (IOException e) {
 			LOG.log(Level.SEVERE, "General IO Exception Occured with Input @ " + url + ": " + e.getMessage());

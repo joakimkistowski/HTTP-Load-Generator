@@ -39,6 +39,7 @@ public class HTTPInputGenerator {
 
 
 	private int currentCallNum = 0;
+	private int timeout = -1;
 	private String lastInput = "";
 
 	private HTMLFunctions htmlFunctions = new HTMLFunctions("");
@@ -52,8 +53,10 @@ public class HTTPInputGenerator {
 	 * if onCall returns nil.
 	 * @param scriptFile The url generator script.
 	 * @param randomSeed Seed for Lua random function.
+	 * @param timeout The http read timeout.
 	 */
-	public HTTPInputGenerator(File scriptFile, int randomSeed) {
+	public HTTPInputGenerator(File scriptFile, int randomSeed, int timeout) {
+		this.timeout = timeout;
 		if (scriptFile != null) {
 			luaGlobals = JsePlatform.standardGlobals();
 			//luaGlobals.get("require").call(LuaValue.valueOf("tools.descartes.httploadgenerator.http.lua.HTML"));
@@ -143,5 +146,13 @@ public class HTTPInputGenerator {
 	 */
 	public void revertLastCall() {
 		currentCallNum--;
+	}
+
+	/**
+	 * Get the http url connection timeout.
+	 * @return The timeout.
+	 */
+	public int getTimeout() {
+		return timeout;
 	}
 }

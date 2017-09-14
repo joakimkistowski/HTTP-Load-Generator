@@ -59,11 +59,13 @@ public class Director extends Thread {
 	 * @param generator The address of the load generator.
 	 * @param randomSeed The random seed for exponentially distributed request arrivals.
 	 * @param threadCount The number of threads that generate load.
+	 * @param urlTimeout The url connection timeout.
 	 * @param scriptPath The path of the script file that generates the specific requests.
 	 * @param powerCommunicatorClassName Fully qualified class name of the power communicator class.
 	 */
 	public static void executeDirector(String profilePath, String outName, String powerAddress, String generator,
-			String randomSeed, String threadCount, String scriptPath, String powerCommunicatorClassName) {
+			String randomSeed, String threadCount, String urlTimeout, String scriptPath,
+			String powerCommunicatorClassName) {
 		try {
 			Scanner scanner = new Scanner(System.in);
 			IPowerCommunicator powerCommunicator = null;
@@ -151,6 +153,19 @@ public class Director extends Thread {
 				LOG.info("Using default load generation thread count: " + threadNum);
 			}
 			
+			//Thread Count
+			int timout = -1;
+			if (urlTimeout != null) {
+				try {
+					timout = Integer.parseInt(urlTimeout);
+					LOG.info("URL connection timout set to " + threadCount + " ms");
+				} catch (NumberFormatException e) {
+					LOG.warning("Invalid timout: " + threadCount);
+				}
+			} else {
+				LOG.info("No timout specified.");
+			}
+			
 			//Script Path
 			String scriptPathRead;
 			if (scriptPath != null) {
@@ -163,7 +178,7 @@ public class Director extends Thread {
 			if (file != null && outName != null && !outName.isEmpty()) {
 				Director director = new Director(generatorAddress.split(":")[0].trim());
 				director.process(file, outName, scanner, randomBatchTimes,
-						threadNum, scriptPathRead, powerCommunicator);
+						threadNum, timout, scriptPathRead, powerCommunicator);
 			}
 			if (powerCommunicator != null) {
 				powerCommunicator.stopCommunicator();
@@ -198,11 +213,12 @@ public class Director extends Thread {
 	 * @param scanner The scanner for reading user start signal from console.
 	 * @param randomBatchTimes True if batches are scheduled using a randomized distribution.
 	 * @param threadCount The number of threads that generate load.
+	 * @param timeout The connection timeout for the HTTP url connections.
 	 * @param scriptPath The path of the script file that generates the specific requests.
 	 * @param powerCommunicator Communicator to communicate with power daemon (optional).
 	 */
 	public void process(File file, String outName, Scanner scanner, boolean randomBatchTimes,
-			int threadCount, String scriptPath, IPowerCommunicator powerCommunicator) {
+			int threadCount, int timeout, String scriptPath, IPowerCommunicator powerCommunicator) {
 
 		try {
 			List<ArrivalRateTuple> arrRates = Main.readFileToList(file, 0);
@@ -213,6 +229,11 @@ public class Director extends Thread {
 			sendThreadCount(threadCount);
 			LOG.info("Thread Count sent to Load Generator: " + threadCount);
 
+			sendTimeout(timeout);
+			if (timeout > 0) {
+				LOG.info("URL connection timeout sent to Load Generator: " + timeout);
+			}
+			
 			sendLUAScript(scriptPath);
 			LOG.info("Contents of script sent to Load Generator: " + scriptPath);
 			
@@ -310,6 +331,11 @@ public class Director extends Thread {
 	
 	private void sendThreadCount(int threadCount) {
 		out.println(IRunnerConstants.THREAD_NUM_KEY + threadCount);
+		waitForOK();
+	}
+	
+	private void sendTimeout(int timeout) {
+		out.println(IRunnerConstants.TIMEOUT_KEY + timeout);
 		waitForOK();
 	}
 	

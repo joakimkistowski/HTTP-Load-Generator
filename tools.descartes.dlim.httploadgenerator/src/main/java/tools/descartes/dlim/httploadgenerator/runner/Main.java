@@ -71,7 +71,7 @@ public class Main extends Thread {
 
 		if (params.get("-d") != null) {
 			Director.executeDirector(params.get("-a"), params.get("-o"), params.get("-p"), params.get("-s"),
-					params.get("-r"), params.get("-t"), params.get("-l"), params.get("-c"));
+					params.get("-r"), params.get("-t"), params.get("-u"), params.get("-l"), params.get("-c"));
 		} else if (params.get("-l") != null) {
 			AbstractLoadGenerator.executeLoadGenerator();
 		}
@@ -108,6 +108,7 @@ public class Main extends Thread {
 				"   \"-l [Lua script]\": Path of the \'l\'ua script that generates the call URLs. "
 						+ "No script => \"http_calls.lua\".");
 		System.out.println("   \"-t [thread count]\": Number of threads in load generator. No thread count => 128.");
+		System.out.println("   \"-u [url con timeout]\": \'U\'rl connection timeout in ms. Default => no timout.");
 		System.out.println("   \"-c [class name]\": Fully qualified classname of the power communicator."
 				+ " Must be on the classpath.");
 	}

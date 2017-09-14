@@ -99,9 +99,8 @@ public class ArrivalRateTupleLoadGenerator extends AbstractLoadGenerator {
 		r.setSeed(seed);
 
 		try {
-
 			// setup initial run Variables
-			HTTPInputGeneratorPool.initializePool(getScriptPath(), numberOfThreads);
+			HTTPInputGeneratorPool.initializePool(getScriptPath(), numberOfThreads, getTimeout());
 			LinkedBlockingQueue<Runnable> executorQueue = new LinkedBlockingQueue<Runnable>();
 			executor = new ThreadPoolExecutor(numberOfThreads, numberOfThreads, 0, TimeUnit.MILLISECONDS,
 					executorQueue);

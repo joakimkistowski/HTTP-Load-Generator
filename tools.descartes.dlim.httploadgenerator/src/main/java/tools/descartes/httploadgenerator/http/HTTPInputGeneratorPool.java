@@ -33,7 +33,7 @@ public final class HTTPInputGeneratorPool {
 	
 	private BlockingQueue<HTTPInputGenerator> queue;
 	
-	private HTTPInputGeneratorPool(String luaScriptPath, int threadCount) {
+	private HTTPInputGeneratorPool(String luaScriptPath, int threadCount, int timeout) {
 		queue = new LinkedBlockingQueue<>();
 		File script = new File(luaScriptPath);
 		if (!script.exists()) {
@@ -42,7 +42,7 @@ public final class HTTPInputGeneratorPool {
 		 // We place an extra input generator in the pool, just to be safe.
 		for (int i = 0; i < threadCount + 1; i++) {
 			try {
-				queue.put(new HTTPInputGenerator(script, i));
+				queue.put(new HTTPInputGenerator(script, i, timeout));
 			} catch (InterruptedException e) {
 				LOG.severe("Interrupted initializing Queue.");
 			}
@@ -65,9 +65,10 @@ public final class HTTPInputGeneratorPool {
 	 * Initializes the pool (deleting an old one if it exists).
 	 * @param luaScriptPath The path of the Lua script.
 	 * @param threadCount The number of threads that will be used to access the pool.
+	 * @param timeout The http url connection timeout.
 	 */
-	public static void initializePool(String luaScriptPath, int threadCount) {
-		pool = new HTTPInputGeneratorPool(luaScriptPath, threadCount);
+	public static void initializePool(String luaScriptPath, int threadCount, int timeout) {
+		pool = new HTTPInputGeneratorPool(luaScriptPath, threadCount, timeout);
 	}
 	
 	/**

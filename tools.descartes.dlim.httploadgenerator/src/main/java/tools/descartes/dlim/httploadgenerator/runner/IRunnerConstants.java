@@ -70,6 +70,10 @@ public interface IRunnerConstants {
 	 */
 	public static final String THREAD_NUM_KEY = "threadnum:";
 	/**
+	 * Signal for sending the http timeout.
+	 */
+	public static final String TIMEOUT_KEY = "timout:";
+	/**
 	 * Signal for sending script path.
 	 */
 	public static final String SCRIPT_PATH_KEY = "scriptpath:";
