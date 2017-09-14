@@ -92,10 +92,10 @@ public class HTTPTransaction extends Transaction {
 			LOG.log(Level.SEVERE, "Malformed URL: " + url);
 			generator.revertLastCall();
 		} catch (ProtocolException e) {
-			LOG.log(Level.SEVERE, "ProtocolException: " + e.getLocalizedMessage());
+			LOG.log(Level.SEVERE, "ProtocolException: " + e.getMessage());
 			generator.revertLastCall();
 		} catch (IOException e) {
-			LOG.log(Level.SEVERE, "General IO Exception Occured with Input @ " + url + ": " + e.getLocalizedMessage());
+			LOG.log(Level.SEVERE, "General IO Exception Occured with Input @ " + url + ": " + e.getMessage());
 			generator.revertLastCall();
 		} finally {
 			try {
