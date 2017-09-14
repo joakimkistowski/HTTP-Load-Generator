@@ -151,7 +151,7 @@ public class TMCTLDCommunicator extends Thread implements IPowerCommunicator {
 		try {
 			socket = new Socket(hostname, port);
 		} catch (IOException x) {
-			LOG.severe("Exception connecting to TMCTLD: " + x.getLocalizedMessage());
+			LOG.severe("Exception connecting to TMCTLD: " + x.getMessage());
 		}
 
 		if (socket == null) {

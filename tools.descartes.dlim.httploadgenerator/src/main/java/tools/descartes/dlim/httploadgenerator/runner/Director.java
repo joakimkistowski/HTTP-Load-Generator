@@ -102,10 +102,10 @@ public class Director extends Thread {
 					LOG.severe("PowerCommunicator class not found: " + powerCommunicatorClassName);
 				} catch (InstantiationException e) {
 					LOG.severe("PowerCommunicator class could not be instantiated: " + powerCommunicatorClassName);
-					LOG.severe(e.getLocalizedMessage());
+					LOG.severe(e.getMessage());
 				} catch (IllegalAccessException e) {
 					LOG.severe("PowerCommunicator class could not be accessed: " + powerCommunicatorClassName);
-					LOG.severe(e.getLocalizedMessage());
+					LOG.severe(e.getMessage());
 				}
 			} else {
 				LOG.warning("No power measurements");
@@ -303,7 +303,7 @@ public class Director extends Thread {
 			LOG.severe("Script file not found at: " + scriptPath);
 		} catch (IOException e) {
 			LOG.severe("IOException parsing script file at: " + scriptPath);
-			LOG.severe(e.getLocalizedMessage());
+			LOG.severe(e.getMessage());
 		}
 		waitForOK();
 	}
