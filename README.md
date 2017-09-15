@@ -4,7 +4,7 @@ Download the binary [here](https://se3.informatik.uni-wuerzburg.de/httploadgener
 
 The HTTP Load Generator is a load generator designed to generate HTTP loads with varying load intensities. It uses load intensity specifications as specified by [LIMBO](http://descartes.tools/limbo) to generate loads that vary in intensity (number of requests per second) over time. The load generator logs application level data and supports connecting to external power measurement daemons. It specifies the http requests themselves using LUA scripts, which are read at run-time.
 
-The HTTP Load Generator tool can be run in two modes: As director and as load generator. The director mode starts the tool in a mode where it parses necessary profiles and scripts, connects to power measurement devices, and collects data. The load generator mode receives instructions from the director and generates the actual requests. The mode is set using command line switches, which means that two instances of the HTTP Load Generator must be running for a test, one in each mode.
+The HTTP Load Generator tool can be run in two modes: As director and as load generator. The director mode starts the tool in a mode where it parses necessary profiles and scripts, connects to power measurement devices, and collects data. The load generator mode receives instructions from the director and generates the actual requests. The mode is set using command line switches, which means that at least two instances of the HTTP Load Generator must be running for a test, one in each mode. The HTTP Load Generator also supports multi-node load generation, where one director connects to multiple instances running in load generator mode.
 
 Structure of this README:
 1. [Features and Application Scenarios](#1-features-and-application-scenarios)
@@ -26,7 +26,7 @@ The load generator can be used for testing of web applications regarding testing
 
 First build or download the [httploadgenetor.jar](https://se3.informatik.uni-wuerzburg.de/httploadgenerator/tools.descartes.dlim.httploadgenerator/target/httploadgenerator.jar). Deploy the httploadgenerator on two machines:
 1. The **director machine** (experiment controller): Usually your PC. This machine must have access to the load profile and request script to be run. In addition this machine must be able to communicate with the power meters (optional, we are not using a power meter in this _getting started_ section).
-2. The **load generator machine**: The machine that sends the network loads. Usually a quite powerful machine. No additional files, except for the jar itself, are required on this machine.
+2. The **load generator machine**: The machine that sends the network loads. Usually a quite powerful machine. No additional files, except for the jar itself, are required on this machine. You may also choose to use multiple load generation machines if you do not have a single machine with sufficient power or network capabilities.
 
 In addition to the jar, you need a load intensity profile and a LUA script for generating the actual requests. We provide an example for each in the examplefiles directory:
 * [Example Load Intensity Profile](https://github.com/joakimkistowski/HTTP-Load-Generator/tree/master/examplefiles/curveArrivalRates.csv): An example load intensity profile that runs for one minute. Its arrival rate increases for 30 seconds before decreasing again in a sinoid shape.
@@ -34,7 +34,7 @@ In addition to the jar, you need a load intensity profile and a LUA script for g
 
 Download both files and place them on the director machine. For simplicity, we will assume that you place them in the same directory as the _httploadgenerator.jar_. You would now also modify the LUA script with calls for your web application. For the minimal example, just make sure that index.html and index.htm are accessible and enter the adress of your server hosting the web application in line 7 of the script.
 
-Now, on the **load generator machine** start the HTTP Load Generator in load generator mode, using the following command line with the _-l_ switch:
+Now, on the **load generator machine** start the HTTP Load Generator in load generator mode, using the following command line with the _-l_ switch. If you use multiple load generator machines, do this on each of them:
 
     $ java -jar httploadgenerator.jar -l
 
@@ -44,7 +44,7 @@ Next, on the **director machine** start the HTTP Load Generator in director mode
 
 The director call does the following:
 * _-d_ starts the director mode.
-* _-s_ specifies the address of the load generator machine.
+* _-s_ specifies the address of the load generator machine. For multiple load generators, use a comma delimiter (no white spaces!).
 * _-a_ specifies the load intensity (*a*rrival rate) profile.
 * _-o_ specifies the name of the *o*utput log, containing the results.
 * _-r_ specifies the random seed (always specify it for reproducibility)
@@ -130,11 +130,12 @@ Primary parameters (pick one):
 
 Secondary parameters for director (optional):
 Missing parameters may cause the director to prompt for the data.
-* "_-s [ip]_": Adre's's of load generator.
+* "_-s [ip]_": Adre's's of load generator. Multiple addresses must be delimited with ",".
 * "_-p [ip[:port]]_": Adress of 'p'owerDaemon. No address => no power measurements.
 * "_-a [path]_": Path of LIMBO-generated 'a'rrival rate file.
 * "_-o [name]_": Name of 'o'utput log relative to directory of arrival rate file.
 * "_-r [seed]_": Integer seed for the 'r'andom generator. No seed => Equi-distant dispatch times.
 * "_-l [Lua script]_": Path of the 'l'ua script that generates the call URLs. No script => "http_calls.lua".
 * "_-t [thread count]_": Number of threads in load generator. No thread count => 128.
+* "_-u [url con timeout]_": 'U'rl connection timeout in ms. Default => no timout.
 * "_-c [class name]_": Fully qualified classname of the power communicator. Must be on the classpath.
