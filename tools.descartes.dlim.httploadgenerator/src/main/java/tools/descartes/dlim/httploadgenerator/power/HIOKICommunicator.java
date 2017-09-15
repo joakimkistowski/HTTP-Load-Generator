@@ -38,7 +38,7 @@ public class HIOKICommunicator extends Thread implements IPowerCommunicator {
 	private static final Logger LOG = Logger.getLogger(HIOKICommunicator.class.getName());
 
 	private static final int HIOKI_DEFAULT_PORT = 3300;
-	private static final long QUERY_INTERVAL_MS = 500;
+	private static final long QUERY_INTERVAL_MS = 250;
 	
 	private Socket powerSocket = null;
 	private BufferedReader in = null;

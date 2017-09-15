@@ -155,7 +155,7 @@ public class LoadGeneratorCommunicator {
 	 */
 	public String getLatestResultMessageBlocking() {
 		try {
-			//5 second timout means no load intensity with granularity > 5 seconds
+			//5 second timeout means no load intensity with granularity > 5 seconds
 			return resultMessageQueue.poll(5, TimeUnit.SECONDS);
 		} catch (InterruptedException e) {
 			LOG.severe("Interrupted taking from message queue.");
