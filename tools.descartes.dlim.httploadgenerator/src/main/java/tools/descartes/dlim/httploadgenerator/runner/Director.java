@@ -266,7 +266,7 @@ public class Director extends Thread {
 
 			//get Data from LoadGenerator
 			while (!collectResultRound(powerCommunicator, writer)) {
-				//collectResultRound blocking waits. We don't need to wait here.
+				/* collectResultRound blocking waits. We don't need to wait here. */
 			}
 			System.out.println("Workload finished.");
 			writer.close();
