@@ -15,15 +15,11 @@
  */
 package tools.descartes.dlim.httploadgenerator.runner;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.net.Socket;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Scanner;
@@ -44,19 +40,17 @@ public class Director extends Thread {
 
 	private static final Logger LOG = Logger.getLogger(Director.class.getName());
 	
-	private Socket socket = null;
-	private BufferedReader in = null;
-	private PrintWriter out = null;
-
 	private static int seed = 5;
 
+	private List<LoadGeneratorCommunicator> communicators;
+	
 	/**
 	 * Execute the director with the given parameters.
 	 * Parameters may be null. Director asks the user for null parameters if they are required.
 	 * @param profilePath The path of the LIMBO-generated load profile.
 	 * @param outName The name of the output log file.
 	 * @param powerAddress The address of the power daemon (optional).
-	 * @param generator The address of the load generator.
+	 * @param generator The address of the load generator(s).
 	 * @param randomSeed The random seed for exponentially distributed request arrivals.
 	 * @param threadCount The number of threads that generate load.
 	 * @param urlTimeout The url connection timeout.
@@ -193,16 +187,25 @@ public class Director extends Thread {
 
 	/**
 	 * Inititializes a director with a load generator address.
-	 * @param loadGenerator Address of the load generator.
+	 * @param loadGenerators Addresses of the load generator. Seperated by ",".
 	 */
-	public Director(String loadGenerator) {
-		try {
-			socket = new Socket(loadGenerator, 24226);
-			out = new PrintWriter(socket.getOutputStream(), true);
-			in = new BufferedReader(new InputStreamReader(
-					socket.getInputStream()));
-		} catch  (IOException e) {
-			System.out.println("Could not connect to LoadGenerator.");
+	public Director(String loadGenerators) {
+		String[] addresses = loadGenerators.split("[,;]");
+		communicators = new ArrayList<>(addresses.length);
+		for (String address : addresses) {
+			String[] addressTokens = address.split(":");
+			String ip = addressTokens[0].trim();
+			if (!ip.isEmpty()) {
+				int port = IRunnerConstants.DEFAULT_PORT;
+				if (addressTokens.length > 1 && !addressTokens[1].trim().isEmpty()) {
+					try {
+						port = Integer.parseInt(addressTokens[1].trim());
+					} catch (NumberFormatException e) {
+						port = IRunnerConstants.DEFAULT_PORT;
+					}
+				}
+				communicators.add(new LoadGeneratorCommunicator(ip, port));
+			}
 		}
 	}
 
@@ -223,18 +226,18 @@ public class Director extends Thread {
 		try {
 			List<ArrivalRateTuple> arrRates = Main.readFileToList(file, 0);
 			LOG.info("Read " + arrRates.size() + " Arrival Rate Tuples");
-			sendArrivalRates(arrRates);
-			LOG.info("Arrival Rates sent to Load Generator.");
+			communicators.parallelStream().forEach(c-> c.sendArrivalRates(arrRates, communicators.size()));
+			LOG.info("Arrival Rates sent to Load Generator(s).");
 
-			sendThreadCount(threadCount);
-			LOG.info("Thread Count sent to Load Generator: " + threadCount);
+			communicators.parallelStream().forEach(c-> c.sendThreadCount(threadCount));
+			LOG.info("Thread Count sent to Load Generator(s): " + threadCount);
 
-			sendTimeout(timeout);
+			communicators.parallelStream().forEach(c-> c.sendTimeout(timeout));
 			if (timeout > 0) {
-				LOG.info("URL connection timeout sent to Load Generator: " + timeout);
+				LOG.info("URL connection timeout sent to Load Generator(s): " + timeout);
 			}
 			
-			sendLUAScript(scriptPath);
+			communicators.parallelStream().forEach(c-> c.sendLUAScript(scriptPath));
 			LOG.info("Contents of script sent to Load Generator: " + scriptPath);
 			
 			String parentPath = file.getParent();
@@ -255,19 +258,15 @@ public class Director extends Thread {
 				executor = Executors.newSingleThreadExecutor();
 				executor.execute(powerCommunicator);
 			}
-			long timeZero = startBenchmarking(randomBatchTimes, seed);
+			long timeZero = communicators.parallelStream()
+					.mapToLong(c -> c.startBenchmarking(randomBatchTimes, seed)).min().getAsLong();
 			String dateString = sdf.format(new Date(timeZero));
 			System.out.println("Beginning Run @" + timeZero + "(" + dateString + ")");
 			writer.println("," + dateString);
 
 			//get Data from LoadGenerator
-			while (true) {
-				String line = in.readLine();
-				if (line.trim().equals("done")) {
-					break;
-				} else if (line != null && !line.isEmpty()) {
-					logState(line.trim(), powerCommunicator, writer);
-				}
+			while (!collectResultRound(powerCommunicator, writer)) {
+				//collectResultRound blocking waits. We don't need to wait here.
 			}
 			System.out.println("Workload finished.");
 			writer.close();
@@ -283,83 +282,70 @@ public class Director extends Thread {
 			e.printStackTrace();
 		}
 	}
+	
+	/**
+	 * Collects one iteration of the results, aggregates them and logs them.
+	 * Returns false if more results are expected in the future.
+	 * Returns true if the measurements have concluded and the "done" signal was received from all communicators.
+	 * @return True, if the measurement has concluded.
+	 */
+	private boolean collectResultRound(IPowerCommunicator powerCommunicator, PrintWriter writer) {
+		int finishedCommunicators = 0;
+		double targetTime = 0;
+		int loadIntensity = 0;
+		int successfulTransactions = 0;
+		int failedTransactions = 0;
+		ArrayList<Double> finalBatchTimes = new ArrayList<Double>();
+		for (LoadGeneratorCommunicator communicator : communicators) {
+			if (communicator.isFinished()) {
+				finishedCommunicators++;
+				if (finishedCommunicators == communicators.size()) {
+					return true;
+				}
+			} else {
+				String receivedResults = communicator.getLatestResultMessageBlocking();
+				if (receivedResults == null) {
+					finishedCommunicators++;
+					if (finishedCommunicators == communicators.size()) {
+						return true;
+					}
+				} else {
+					String[] tokens = receivedResults.split(",");
+					double receivedTargetTime = Double.parseDouble(tokens[0].trim());
+					if (targetTime == 0) {
+						targetTime = receivedTargetTime;
+					} else {
+						if (targetTime != receivedTargetTime) {
+							LOG.severe("Time mismatch in load generator responses! Measurement invalid.");
+						}
+					}
+					loadIntensity += Integer.parseInt(tokens[1].trim());
+					successfulTransactions += Integer.parseInt(tokens[2].trim());
+					failedTransactions += Integer.parseInt(tokens[3].trim());
+					finalBatchTimes.add(Double.parseDouble(tokens[4].trim()));
+				}
+			}
+		}
+		double finalBatchTime = finalBatchTimes.stream().mapToDouble(d -> d.doubleValue()).max().getAsDouble();
+		logState(targetTime, loadIntensity, successfulTransactions,
+				failedTransactions, finalBatchTime, powerCommunicator, writer);
+		return false;
+	}
 
-	private void logState(String generatorLine, IPowerCommunicator powerCommunicator, PrintWriter writer) {
+	private void logState(double targetTime, int loadIntensity, int successfulTransactions, int failedTransactions,
+			double finalBatchTime, IPowerCommunicator powerCommunicator, PrintWriter writer) {
 		//get Power
 		double power = 0;
 		if (powerCommunicator != null) {
 			power = powerCommunicator.getPowerMeasurement();
 		}
-		String[] tokens = generatorLine.trim().split(",");
-		System.out.println("Target Time = " + tokens[0]
-				+ "; Load Intensity = " + tokens[1]
-				+ "; Successful Transactions = " + tokens[2]
-				+ "; Failed Transactions = " + tokens[3]);
-		writer.println(generatorLine.trim() + "," + power);
-	}
-
-	private void sendArrivalRates(List<ArrivalRateTuple> rates) {
-		//send load profile
-		out.write(IRunnerConstants.ARRIVALRATE_SEND_KEY + "," + rates.size() + "\r\n");
-		for (ArrivalRateTuple t : rates) {
-			out.write("" + t.getTimeStamp() + "," + t.getArrivalRate());
-			out.write("\r\n");
-		}
-		out.flush();
-		waitForOK();
-	}
-
-	private void sendLUAScript(String scriptPath) {
-		out.println(IRunnerConstants.SCRIPT_SEND_KEY);
-		try (BufferedReader br = new BufferedReader(new FileReader(scriptPath))) {
-			String line;
-			while ((line = br.readLine()) != null) {
-				out.write(line + "\n");
-			}
-			out.write(IRunnerConstants.SCRIPT_TERM_KEY + "\n");
-			out.flush();
-		} catch (FileNotFoundException e) {
-			LOG.severe("Script file not found at: " + scriptPath);
-		} catch (IOException e) {
-			LOG.severe("IOException parsing script file at: " + scriptPath);
-			LOG.severe(e.getMessage());
-		}
-		waitForOK();
-	}
-	
-	private void sendThreadCount(int threadCount) {
-		out.println(IRunnerConstants.THREAD_NUM_KEY + threadCount);
-		waitForOK();
-	}
-	
-	private void sendTimeout(int timeout) {
-		out.println(IRunnerConstants.TIMEOUT_KEY + timeout);
-		waitForOK();
-	}
-	
-	private void waitForOK() {
-		waitForMessage("ok");
-	}
-
-	private void waitForMessage(String message) {
-		String line;
-		while (true) {
-			try {
-				line = in.readLine();
-				if (line.trim().equals(message)) {
-					System.out.println("Load Generator sent: " + message);
-					break;
-				}
-			} catch (IOException e) {
-				System.out.println("Read Failed");
-			}
-		}
-	}
-
-	private long startBenchmarking(boolean randomBatchTimes, int seed) throws IOException {
-		out.println("start," + randomBatchTimes + "," + seed);
-		long time = Long.parseLong(in.readLine().trim());
-		return time;
+		System.out.println("Target Time = " + targetTime
+				+ "; Load Intensity = " + loadIntensity
+				+ "; Successful Transactions = " + successfulTransactions
+				+ "; Failed Transactions = " + failedTransactions);
+		writer.println(targetTime + "," + loadIntensity + ","
+				+ successfulTransactions + "," + failedTransactions + ","
+				+ finalBatchTime + "," + power);
 	}
 
 }

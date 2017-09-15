@@ -26,6 +26,10 @@ public interface IRunnerConstants {
 
 	/** Default values */
 	/**
+	 * Default port for communication between director and load generator.
+	 */
+	public static final int DEFAULT_PORT = 24226;
+	/**
 	 * Default output log name.
 	 */
 	public static final String DEFAULT_LOG = "default_log.txt";

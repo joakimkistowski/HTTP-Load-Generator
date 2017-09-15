@@ -102,7 +102,6 @@ public class HTTPTransaction extends Transaction {
 		} catch (IOException e) {
 			LOG.log(Level.SEVERE, "General IO Exception Occured with Input @ " + url + ": " + e.getMessage());
 			generator.revertLastCall();
-			e.printStackTrace();
 		} finally {
 			try {
 				if (in != null) {

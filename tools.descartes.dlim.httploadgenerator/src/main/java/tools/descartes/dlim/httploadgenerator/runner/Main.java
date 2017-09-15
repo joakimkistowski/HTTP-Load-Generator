@@ -98,7 +98,8 @@ public class Main extends Thread {
 		System.out.println("");
 		System.out.println("Secondary parameters for director (optional):");
 		System.out.println("Missing parameters may cause the director to prompt for the data.");
-		System.out.println("   \"-s [ip]\": Adre\'s\'s of load generator.");
+		System.out.println(
+				"   \"-s [ip]\": Adre\'s\'s of load generator(s). Multiple addresses must be delimited with \",\".");
 		System.out.println("   \"-p [ip[:port]]\": Adress of \'p\'owerDaemon. No address => no power measurements.");
 		System.out.println("   \"-a [path]\": Path of LIMBO-generated \'a\'rrival rate file.");
 		System.out.println("   \"-o [name]\": Name of \'o\'utput log relative to directory of arrival rate file.");
