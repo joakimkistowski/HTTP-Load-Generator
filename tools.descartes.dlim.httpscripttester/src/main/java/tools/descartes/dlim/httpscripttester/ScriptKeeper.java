@@ -39,7 +39,7 @@ public class ScriptKeeper {
 	 */
 	public ScriptKeeper(String scriptPath) {
 		//we use 5 as the random seed for testing
-		generator = new HTTPInputGenerator(new File(scriptPath), 5);
+		generator = new HTTPInputGenerator(new File(scriptPath), 5, -1);
 		transaction = new HTTPTransaction();
 	}
 	
