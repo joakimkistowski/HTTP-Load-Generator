@@ -299,8 +299,6 @@ public class Director extends Thread {
 	}
 
 	private void sendArrivalRates(List<ArrivalRateTuple> rates) {
-		//send type, for initialization of load generator
-		out.println("type:" + IRunnerConstants.ARRIVALRATE_SEND_KEY);
 		//send load profile
 		out.write(IRunnerConstants.ARRIVALRATE_SEND_KEY + "," + rates.size() + "\r\n");
 		for (ArrivalRateTuple t : rates) {
