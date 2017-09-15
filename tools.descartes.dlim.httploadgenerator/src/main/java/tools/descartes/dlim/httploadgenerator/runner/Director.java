@@ -21,11 +21,11 @@ import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import tools.descartes.dlim.httploadgenerator.generator.ArrivalRateTuple;
@@ -60,9 +60,8 @@ public class Director extends Thread {
 	public static void executeDirector(String profilePath, String outName, String powerAddress, String generator,
 			String randomSeed, String threadCount, String urlTimeout, String scriptPath,
 			String powerCommunicatorClassName) {
-		try {
 			Scanner scanner = new Scanner(System.in);
-			IPowerCommunicator powerCommunicator = null;
+			List<IPowerCommunicator> powerCommunicators = new LinkedList<>();
 			
 			//Load Profile
 			File file = null;
@@ -82,27 +81,7 @@ public class Director extends Thread {
 			//Power measurement
 			if (powerCommunicatorClassName != null && !powerCommunicatorClassName.trim().isEmpty()
 					&& powerAddress != null && !powerAddress.isEmpty()) {
-				powerAddress = powerAddress.trim();
-				String[] host = powerAddress.split(":");
-				int port = 22444;
-				if (host.length > 1) {
-					port = Integer.parseInt(host[1].trim());
-				}
-				
-				try {
-					Class<? extends IPowerCommunicator> pcClass
-						= Class.forName(powerCommunicatorClassName.trim()).asSubclass(IPowerCommunicator.class);
-					powerCommunicator = pcClass.newInstance();
-					powerCommunicator.initializePowerCommunicator(host[0].trim(), port);
-				} catch (ClassNotFoundException e) {
-					LOG.severe("PowerCommunicator class not found: " + powerCommunicatorClassName);
-				} catch (InstantiationException e) {
-					LOG.severe("PowerCommunicator class could not be instantiated: " + powerCommunicatorClassName);
-					LOG.severe(e.getMessage());
-				} catch (IllegalAccessException e) {
-					LOG.severe("PowerCommunicator class could not be accessed: " + powerCommunicatorClassName);
-					LOG.severe(e.getMessage());
-				}
+				initializePowerCommunicators(powerCommunicators, powerCommunicatorClassName, powerAddress);
 			} else {
 				LOG.warning("No power measurements");
 			}
@@ -172,17 +151,10 @@ public class Director extends Thread {
 			if (file != null && outName != null && !outName.isEmpty()) {
 				Director director = new Director(generatorAddress.split(":")[0].trim());
 				director.process(file, outName, scanner, randomBatchTimes,
-						threadNum, timout, scriptPathRead, powerCommunicator);
+						threadNum, timout, scriptPathRead, powerCommunicators);
 			}
-			if (powerCommunicator != null) {
-				powerCommunicator.stopCommunicator();
-			}
+			powerCommunicators.forEach(pc -> pc.stopCommunicator());
 			scanner.close();
-
-		} catch (IOException e1) {
-			LOG.log(Level.SEVERE, "Power Daemon error.");
-			e1.printStackTrace();
-		}
 	}
 
 	/**
@@ -218,10 +190,10 @@ public class Director extends Thread {
 	 * @param threadCount The number of threads that generate load.
 	 * @param timeout The connection timeout for the HTTP url connections.
 	 * @param scriptPath The path of the script file that generates the specific requests.
-	 * @param powerCommunicator Communicator to communicate with power daemon (optional).
+	 * @param powerCommunicators Communicators for communicating with power daemon (optional).
 	 */
 	public void process(File file, String outName, Scanner scanner, boolean randomBatchTimes,
-			int threadCount, int timeout, String scriptPath, IPowerCommunicator powerCommunicator) {
+			int threadCount, int timeout, String scriptPath, List<IPowerCommunicator> powerCommunicators) {
 
 		try {
 			List<ArrivalRateTuple> arrRates = Main.readFileToList(file, 0);
@@ -246,17 +218,20 @@ public class Director extends Thread {
 			}
 			PrintWriter writer = new PrintWriter(parentPath + "/" + outName);
 			writer.print("Target Time,Load Intensity,Successful Transactions,"
-			 + "Failed Transactions,Final Batch Dispatch Time,Watts");
-
+			 + "Failed Transactions,Final Batch Dispatch Time");
+			powerCommunicators.stream().forEachOrdered(pc -> writer.print(",Watts(" + pc.getCommunicatorName() + ")"));
+			
 			System.out.print("Press Enter to begin Execution");
 			outName = scanner.nextLine();
 
 			//setup initial run Variables
 			ExecutorService executor = null;
 			SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy;HH:mm:ssSSS");
-			if (powerCommunicator != null) {
-				executor = Executors.newSingleThreadExecutor();
-				executor.execute(powerCommunicator);
+			if (powerCommunicators != null && !powerCommunicators.isEmpty()) {
+				executor = Executors.newFixedThreadPool(powerCommunicators.size());
+				for (IPowerCommunicator pc : powerCommunicators) {
+					executor.execute(pc);
+				}
 			}
 			long timeZero = communicators.parallelStream()
 					.mapToLong(c -> c.startBenchmarking(randomBatchTimes, seed)).min().getAsLong();
@@ -265,14 +240,14 @@ public class Director extends Thread {
 			writer.println("," + dateString);
 
 			//get Data from LoadGenerator
-			while (!collectResultRound(powerCommunicator, writer)) {
+			while (!collectResultRound(powerCommunicators, writer)) {
 				/* collectResultRound blocking waits. We don't need to wait here. */
 			}
 			System.out.println("Workload finished.");
 			writer.close();
 			System.out.println("Log finished.");
-			if (powerCommunicator != null) {
-				powerCommunicator.stopCommunicator();
+			if (powerCommunicators != null && !powerCommunicators.isEmpty()) {
+				powerCommunicators.forEach(pc -> pc.stopCommunicator());
 				executor.shutdown();
 			}
 
@@ -283,13 +258,48 @@ public class Director extends Thread {
 		}
 	}
 	
+	private static void initializePowerCommunicators(List<IPowerCommunicator> pcList,
+			String pcClassName, String addresses) {
+		String[] singleAddresses = addresses.trim().split("[,;]");
+		for (String address : singleAddresses) {
+			if (!address.trim().isEmpty()) {
+				String[] host = address.split(":");
+				int port = 22444;
+				if (host.length > 1) {
+					port = Integer.parseInt(host[1].trim());
+				}
+				
+				try {
+					Class<? extends IPowerCommunicator> pcClass
+						= Class.forName(pcClassName.trim()).asSubclass(IPowerCommunicator.class);
+					IPowerCommunicator powerCommunicator = pcClass.newInstance();
+					powerCommunicator.initializePowerCommunicator(host[0].trim(), port);
+					LOG.info("Initializing Power Communicator for address: " + host[0].trim() + ":" + port);
+					pcList.add(powerCommunicator);
+				} catch (ClassNotFoundException e) {
+					LOG.severe("PowerCommunicator class not found: " + pcClassName);
+				} catch (InstantiationException e) {
+					LOG.severe("PowerCommunicator class could not be instantiated: " + pcClassName);
+					LOG.severe(e.getMessage());
+				} catch (IllegalAccessException e) {
+					LOG.severe("PowerCommunicator class could not be accessed: " + pcClassName);
+					LOG.severe(e.getMessage());
+				} catch (IOException e) {
+					LOG.severe("IOException initializing power communicator: " + e.getMessage());
+				}
+			}
+		}
+		
+		
+	}
+	
 	/**
 	 * Collects one iteration of the results, aggregates them and logs them.
 	 * Returns false if more results are expected in the future.
 	 * Returns true if the measurements have concluded and the "done" signal was received from all communicators.
 	 * @return True, if the measurement has concluded.
 	 */
-	private boolean collectResultRound(IPowerCommunicator powerCommunicator, PrintWriter writer) {
+	private boolean collectResultRound(List<IPowerCommunicator> powerCommunicator, PrintWriter writer) {
 		int finishedCommunicators = 0;
 		double targetTime = 0;
 		int loadIntensity = 0;
@@ -333,19 +343,24 @@ public class Director extends Thread {
 	}
 
 	private void logState(double targetTime, int loadIntensity, int successfulTransactions, int failedTransactions,
-			double finalBatchTime, IPowerCommunicator powerCommunicator, PrintWriter writer) {
+			double finalBatchTime, List<IPowerCommunicator> powerCommunicators, PrintWriter writer) {
 		//get Power
-		double power = 0;
-		if (powerCommunicator != null) {
-			power = powerCommunicator.getPowerMeasurement();
+		List<Double> powers = null;
+		if (powerCommunicators != null && !powerCommunicators.isEmpty()) {
+			powers = new ArrayList<>(powerCommunicators.size());
+			for (IPowerCommunicator pc : powerCommunicators) {
+				powers.add(pc.getPowerMeasurement());
+			}
 		}
 		System.out.println("Target Time = " + targetTime
 				+ "; Load Intensity = " + loadIntensity
 				+ "; Successful Transactions = " + successfulTransactions
 				+ "; Failed Transactions = " + failedTransactions);
-		writer.println(targetTime + "," + loadIntensity + ","
+		writer.print(targetTime + "," + loadIntensity + ","
 				+ successfulTransactions + "," + failedTransactions + ","
-				+ finalBatchTime + "," + power);
+				+ finalBatchTime);
+		powers.stream().forEachOrdered(p -> writer.print("," + p));
+		writer.println("");
 	}
 
 }

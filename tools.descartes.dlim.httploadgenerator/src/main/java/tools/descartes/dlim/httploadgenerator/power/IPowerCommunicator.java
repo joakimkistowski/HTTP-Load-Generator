@@ -48,4 +48,13 @@ public interface IPowerCommunicator extends Runnable {
 	 */
 	public void stopCommunicator();
 	
+	/**
+	 * Returns a unique name for a communicator instance.
+	 * E.g., the address of the power analyzer it is connecting to.
+	 * @return The communicator name.
+	 */
+	default public String getCommunicatorName() {
+		return this.getClass().getSimpleName();
+	}
+	
 }

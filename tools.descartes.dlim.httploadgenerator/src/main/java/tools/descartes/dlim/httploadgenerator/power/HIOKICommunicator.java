@@ -47,6 +47,8 @@ public class HIOKICommunicator extends Thread implements IPowerCommunicator {
 	private BlockingQueue<Double> results = new LinkedBlockingQueue<>();
 	private boolean stop = false;
 	
+	private String name = "";
+	
 	/**
 	 * {@inheritDoc}
 	 */
@@ -56,6 +58,9 @@ public class HIOKICommunicator extends Thread implements IPowerCommunicator {
 
 		if (port < 0) {
 			port = HIOKI_DEFAULT_PORT;
+			name = hostname;
+		} else {
+			name = hostname + ":" + port;
 		}
 		
 		try {
@@ -97,6 +102,13 @@ public class HIOKICommunicator extends Thread implements IPowerCommunicator {
 			} catch (InterruptedException e) {
 				LOG.severe("Interrupted waiting: " + e.getMessage());
 			}
+		}
+		try {
+			out.close();
+			in.close();
+			powerSocket.close();
+		} catch (IOException e) {
+			LOG.severe("Error closing connection with power meter: " + e.getMessage());
 		}
 	}
 	
@@ -142,13 +154,6 @@ public class HIOKICommunicator extends Thread implements IPowerCommunicator {
 	@Override
 	public void stopCommunicator() {
 		setStop(true);
-		try {
-			out.close();
-			in.close();
-			powerSocket.close();
-		} catch (IOException e) {
-			LOG.severe("Error closing connection with power meter: " + e.getMessage());
-		}
 	}
 
 	private synchronized boolean isStop() {
@@ -157,5 +162,13 @@ public class HIOKICommunicator extends Thread implements IPowerCommunicator {
 
 	private synchronized void setStop(boolean stop) {
 		this.stop = stop;
+	}
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public String getCommunicatorName() {
+		return name;
 	}
 }
