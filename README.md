@@ -104,7 +104,7 @@ The HTTP Load Generator supports connecting to power analyzer daemons. The gener
 
 We provide a **IPowerCommunicator** interface in the _tools.descartes.dlim.httploadgenerator.power_ package. Implement your own power daemon communicator against this interface. The _TMCTLDCommunicator_ can be used as an example implementation.
 
-To start the HTTP Load Generator with your power communicator, add it to the classpath and then specify the fully quailified class name of your communicator using the _-c_ switch of the HTTP Load Generator in director mode. Use the _-p_ switch to specify the network address of your power daemon.
+To start the HTTP Load Generator with your power communicator, add it to the classpath and then specify the fully quailified class name of your communicator using the _-c_ switch of the HTTP Load Generator in director mode. Use the _-p_ switch to specify the network address of your power daemon. You may enter multiple, comma separated (no whitespeces!), addresses. If you do, the director will instantiate a power communicator for each of those addresses and log its results in a separate column.
 
 Example:
 
