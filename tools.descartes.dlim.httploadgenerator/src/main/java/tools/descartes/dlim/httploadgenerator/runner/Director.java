@@ -218,7 +218,7 @@ public class Director extends Thread {
 			}
 			PrintWriter writer = new PrintWriter(parentPath + "/" + outName);
 			writer.print("Target Time,Load Intensity,Successful Transactions,"
-			 + "Failed Transactions,Final Batch Dispatch Time");
+			 + "Failed Transactions,Avg Response Time,Final Batch Dispatch Time");
 			powerCommunicators.stream().forEachOrdered(pc -> writer.print(",Watts(" + pc.getCommunicatorName() + ")"));
 			
 			System.out.print("Press Enter to begin Execution");
@@ -305,6 +305,7 @@ public class Director extends Thread {
 		int loadIntensity = 0;
 		int successfulTransactions = 0;
 		int failedTransactions = 0;
+		ArrayList<Double> responseTimes = new ArrayList<Double>();
 		ArrayList<Double> finalBatchTimes = new ArrayList<Double>();
 		for (LoadGeneratorCommunicator communicator : communicators) {
 			if (communicator.isFinished()) {
@@ -331,19 +332,22 @@ public class Director extends Thread {
 					}
 					loadIntensity += Integer.parseInt(tokens[1].trim());
 					successfulTransactions += Integer.parseInt(tokens[2].trim());
-					failedTransactions += Integer.parseInt(tokens[3].trim());
-					finalBatchTimes.add(Double.parseDouble(tokens[4].trim()));
+					responseTimes.add(Double.parseDouble(tokens[3].trim()));
+					failedTransactions += Integer.parseInt(tokens[4].trim());
+					finalBatchTimes.add(Double.parseDouble(tokens[5].trim()));
 				}
 			}
 		}
+		double avgResponseTime = responseTimes.stream().mapToDouble(d -> d.doubleValue()).average().getAsDouble();
 		double finalBatchTime = finalBatchTimes.stream().mapToDouble(d -> d.doubleValue()).max().getAsDouble();
-		logState(targetTime, loadIntensity, successfulTransactions,
-				failedTransactions, finalBatchTime, powerCommunicator, writer);
+		logState(targetTime, loadIntensity, successfulTransactions, failedTransactions,
+				avgResponseTime, finalBatchTime, powerCommunicator, writer);
 		return false;
 	}
 
 	private void logState(double targetTime, int loadIntensity, int successfulTransactions, int failedTransactions,
-			double finalBatchTime, List<IPowerCommunicator> powerCommunicators, PrintWriter writer) {
+			double avgResponseTime, double finalBatchTime, List<IPowerCommunicator> powerCommunicators,
+			PrintWriter writer) {
 		//get Power
 		List<Double> powers = null;
 		if (powerCommunicators != null && !powerCommunicators.isEmpty()) {
@@ -358,7 +362,7 @@ public class Director extends Thread {
 				+ "; Failed Transactions = " + failedTransactions);
 		writer.print(targetTime + "," + loadIntensity + ","
 				+ successfulTransactions + "," + failedTransactions + ","
-				+ finalBatchTime);
+				+ avgResponseTime + "," + finalBatchTime);
 		powers.stream().forEachOrdered(p -> writer.print("," + p));
 		writer.println("");
 	}

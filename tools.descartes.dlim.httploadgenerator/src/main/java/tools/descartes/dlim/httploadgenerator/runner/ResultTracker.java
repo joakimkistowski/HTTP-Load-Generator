@@ -15,22 +15,31 @@
  */
 package tools.descartes.dlim.httploadgenerator.runner;
 
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Logger;
+
 /**
- * Offers tracking of invalid transactions using atomic counter operations.
+ * Offers tracking of results, such as response times and
+ * invalid transactions using atomic counter operations.
  * @author Joakim von Kistowski
  *
  */
-public final class ValidityTracker {
+public final class ResultTracker {
 
+	private static final Logger LOG = Logger.getLogger(ResultTracker.class.getName());
+	
 	/**
 	 * The tracker singleton.
 	 */
-	public static final ValidityTracker TRACKER = new ValidityTracker();
+	public static final ResultTracker TRACKER = new ResultTracker();
 	
 	private long invalidTransactionsPerMeasurementInterval = 0;
 	private long invalidTransactionsTotal = 0;
 	
-	private ValidityTracker() {
+	private BlockingQueue<Long> responseTimeQueue = new LinkedBlockingQueue<>();
+	
+	private ResultTracker() {
 		
 	}
 	
@@ -40,6 +49,7 @@ public final class ValidityTracker {
 	public synchronized void reset() {
 		invalidTransactionsPerMeasurementInterval = 0;
 		invalidTransactionsTotal = 0;
+		responseTimeQueue.clear();
 	}
 	
 	/**
@@ -66,5 +76,36 @@ public final class ValidityTracker {
 	 */
 	public synchronized long getTotalInvalidTransactionCount() {
 		return invalidTransactionsTotal;
+	}
+	
+	/**
+	 * Append a response time measurement (in ms) to the logging queue.
+	 * @param responseTimeMs The resonse time in ms.
+	 */
+	public void logResponseTime(long responseTimeMs) {
+		try {
+			responseTimeQueue.put(responseTimeMs);
+		} catch (InterruptedException e) {
+			LOG.severe("Error logging response time: " + e.getMessage());
+		}
+	}
+	
+	/**
+	 * Returns the average response time for all recently logged results in seconds.
+	 * Clears the result storage for new results.
+	 * @return The average response time in seconds.
+	 */
+	public double getAverageResponseTimeInS() {
+		 Long timems;
+		 int count = 0;
+		 double timeSumInS = 0.0;
+		 while ((timems = responseTimeQueue.poll()) != null) {
+			 count++;
+			 timeSumInS += (double) timems / 1000.0;
+		 }
+		 if (count == 0) {
+			 return 0.0;
+		 }
+		 return timeSumInS / count;
 	}
 }

@@ -223,7 +223,7 @@ public abstract class AbstractLoadGenerator extends Thread {
 		// Read Params
 		boolean randomBatchTimes = Boolean.parseBoolean(params[1].trim());
 		int seed = Integer.parseInt(params[2].trim());
-		ValidityTracker.TRACKER.reset();
+		ResultTracker.TRACKER.reset();
 		out.println(System.currentTimeMillis());
 
 		LOG.log(Level.INFO, "Starting run with randomBatchTimes=" + randomBatchTimes + ", seed=" + seed);
@@ -271,15 +271,17 @@ public abstract class AbstractLoadGenerator extends Thread {
 	 *            preset load throughput
 	 * @param throughput
 	 *            actual achieved load throughput
+	 * @param avgResponseTime
+	 * 			  average response time
 	 * @param invalidTransactionCount
 	 * 			  Count of invalid transactions for the measuremetn interval.
 	 * @param actualtime
 	 *            actual time
 	 */
 	protected void sendToDirector(double targettime, int loadintensity, long throughput,
-				long invalidTransactionCount, double actualtime) {
+				double avgResponseTime, long invalidTransactionCount, double actualtime) {
 		out.println("" + targettime + "," + loadintensity + "," + throughput
-				+ "," + invalidTransactionCount + "," + actualtime);
+				+ "," + avgResponseTime + "," + invalidTransactionCount + "," + actualtime);
 	}
 
 	/**
