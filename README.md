@@ -102,13 +102,17 @@ We recommend a command line lauch, as the command line in the background will sh
 
 The HTTP Load Generator supports connecting to power analyzer daemons. The general idea behind the infrastructure is to connect to a network daemon that may run on a separate machine with the power analyzer. Unfortunately, most power analyzer daemons, such as the SPEC PTDaemon, have restrictive licenses, prohibiting their use with the HTTP Load Generator or preventing us from providing them to you.
 
-We provide a **IPowerCommunicator** interface in the _tools.descartes.dlim.httploadgenerator.power_ package. Implement your own power daemon communicator against this interface. The _TMCTLDCommunicator_ can be used as an example implementation.
+We provide a **IPowerCommunicator** interface in the _tools.descartes.dlim.httploadgenerator.power_ package. Implement your own power daemon communicator against this interface. The _HIOKICommunicator_ is a functioning reference implementation that supports ethernet-capable HIOKI power measurement devices. The _TMCTLDCommunicator_ can be used as a further example implementation.
 
 To start the HTTP Load Generator with your power communicator, add it to the classpath and then specify the fully quailified class name of your communicator using the _-c_ switch of the HTTP Load Generator in director mode. Use the _-p_ switch to specify the network address of your power daemon. You may enter multiple, comma separated (no whitespeces!), addresses. If you do, the director will instantiate a power communicator for each of those addresses and log its results in a separate column.
 
-Example:
+Example (with the power communicator compiled into the httploadgenerator.jar):
 
     $ java -jar httploadgenerator.jar -d -s LOADGENIP -a myArrivalRates.csv -o myLog.csv -p PWRRDAEEMONIP:PWRDAEMONPORT -c my.fully.qualified.Classname -l./http_calls.lua
+
+Example (with the power communicator compiled into a separate jar):
+
+    $ java -cp "MYJAR.jar;httploadgenerator.jar" tools.descartes.dlim.httploadgenerator.runner.Main -d -s LOADGENIP -a myArrivalRates.csv -o myLog.csv -p PWRRDAEEMONIP:PWRDAEMONPORT -c my.fully.qualified.Classname -l./http_calls.lua
 
 ## 5. All Command Line Switches
 
