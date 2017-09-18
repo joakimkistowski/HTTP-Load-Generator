@@ -363,7 +363,9 @@ public class Director extends Thread {
 		writer.print(targetTime + "," + loadIntensity + ","
 				+ successfulTransactions + "," + failedTransactions + ","
 				+ avgResponseTime + "," + finalBatchTime);
-		powers.stream().forEachOrdered(p -> writer.print("," + p));
+		if (powers != null && !powers.isEmpty()) {
+			powers.stream().forEachOrdered(p -> writer.print("," + p));
+		}
 		writer.println("");
 	}
 
