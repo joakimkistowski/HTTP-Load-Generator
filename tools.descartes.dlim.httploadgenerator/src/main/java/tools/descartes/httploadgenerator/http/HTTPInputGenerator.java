@@ -94,6 +94,7 @@ public class HTTPInputGenerator {
 	 */
 	private void restartCycle() {
 		currentCallNum = 1;
+		cookieManager.getCookieStore().removeAll();
 		LuaValue cycleInit = luaGlobals.get(LUA_CYCLE_INIT);
 		if (!cycleInit.isnil()) {
 			cycleInit.call();
