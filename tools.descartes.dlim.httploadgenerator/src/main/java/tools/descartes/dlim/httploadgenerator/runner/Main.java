@@ -87,31 +87,34 @@ public class Main extends Thread {
 		System.out.println("Example:");
 		System.out.println(
 				"   java -jar httploadgenerator.jar -d -s 192.168.0.201 "
-						+ "-a ./arrivalRates/test.txt -o myLog.csv -p 127.0.0.1:8888 "
-						+ "-c tools.descartes.dlim.httploadgenerator.power.TMCTLDCommunicator -l ./http_calls.lua");
+						+ "-a ./arrivalRates/test.csv -o myLog.csv -p 10.1.2.3:3300 "
+						+ "-c tools.descartes.dlim.httploadgenerator.power.HIOKICommunicator -l ./http_calls.lua");
 		System.out.println("");
 		System.out.println("Primary parameters (pick one):");
-		System.out.println(
-				"   \"-d\": \'d\'irector mode. starts the director. Additional optional parameters are useful.");
+		System.out.println("   \"-d\": \'d\'irector mode. starts the director.");
+		System.out.println("         Additional optional parameters are useful.");
 		System.out.println("   \"-l\": \'l\'oad generator mode. Needs no additional parameters.");
 		System.out.println("   \"-h\": this \'h\'elp page.");
 		System.out.println("");
 		System.out.println("Secondary parameters for director (optional):");
 		System.out.println("Missing parameters may cause the director to prompt for the data.");
-		System.out.println(
-				"   \"-s [ip]\": Adre\'s\'s of load generator(s). Multiple addresses must be delimited with \",\".");
-		System.out.println("   \"-p [ip[:port]]\": Adress of \'p\'owerDaemon. No address => no power measurements.");
+		System.out.println("   \"-s [ip]\": Adre\'s\'s of load generator(s).");
+		System.out.println("              Multiple addresses are delimited with \",\" (no whitespaces!).");
+		System.out.println("   \"-p [ip[:port]]\": Adress of \'p\'owerDaemon. Multiple addresses are");
+		System.out.println("                     delimited with \",\" (no whitespaces!).");
+		System.out.println("                     No address => no power measurements.");
 		System.out.println("   \"-a [path]\": Path of LIMBO-generated \'a\'rrival rate file.");
-		System.out.println("   \"-o [name]\": Name of \'o\'utput log relative to directory of arrival rate file.");
-		System.out.println(
-				"   \"-r [seed]\": Integer seed for the \'r\'andom generator. No seed => Equi-distant dispatch times.");
-		System.out.println(
-				"   \"-l [Lua script]\": Path of the \'l\'ua script that generates the call URLs. "
-						+ "No script => \"http_calls.lua\".");
-		System.out.println("   \"-t [thread count]\": Number of threads in load generator. No thread count => 128.");
+		System.out.println("   \"-o [name]\": Name of \'o\'utput log relative to directory");
+		System.out.println("                of arrival rate file.");
+		System.out.println("   \"-r [seed]\": Integer seed for the \'r\'andom generator.");
+		System.out.println("                No seed => Equi-distant dispatch times.");
+		System.out.println("   \"-l [Lua script]\": Path of the \'l\'ua script that generates the call URLs.");
+		System.out.println("                      No script => \"http_calls.lua\".");
+		System.out.println("   \"-t [thread count]\": Number of threads in load generator.");
+		System.out.println("                        No thread count => 128.");
 		System.out.println("   \"-u [url con timeout]\": \'U\'rl connection timeout in ms. Default => no timout.");
-		System.out.println("   \"-c [class name]\": Fully qualified classname of the power communicator."
-				+ " Must be on the classpath.");
+		System.out.println("   \"-c [class name]\": Fully qualified classname of the power communicator.");
+		System.out.println("                      Must be on the classpath.");
 	}
 
 	/**
