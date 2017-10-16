@@ -17,8 +17,8 @@ package tools.descartes.dlim.httpscripttester;
 
 import java.io.File;
 
-import tools.descartes.httploadgenerator.http.HTTPInputGenerator;
-import tools.descartes.httploadgenerator.http.HTTPTransaction;
+import tools.descartes.dlim.httploadgenerator.http.HTTPInputGenerator;
+import tools.descartes.dlim.httploadgenerator.http.HTTPTransaction;
 
 /**
  * Keeper for the LUA script to use from the UI.

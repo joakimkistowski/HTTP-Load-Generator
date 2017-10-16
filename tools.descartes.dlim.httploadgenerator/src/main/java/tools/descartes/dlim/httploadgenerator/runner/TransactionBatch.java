@@ -19,7 +19,7 @@ import java.util.Queue;
 import java.util.Random;
 import java.util.concurrent.ThreadPoolExecutor;
 
-import tools.descartes.httploadgenerator.http.HTTPTransaction;
+import tools.descartes.dlim.httploadgenerator.http.HTTPTransaction;
 
 /**
  * A batch of transactions to be scheduled.

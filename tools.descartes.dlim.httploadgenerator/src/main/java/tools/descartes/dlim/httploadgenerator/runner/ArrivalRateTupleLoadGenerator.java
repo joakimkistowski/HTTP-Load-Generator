@@ -28,7 +28,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import tools.descartes.dlim.httploadgenerator.generator.ArrivalRateTuple;
-import tools.descartes.httploadgenerator.http.HTTPInputGeneratorPool;
+import tools.descartes.dlim.httploadgenerator.http.HTTPInputGeneratorPool;
 
 /**
  * The class ArrivalRateTupleLoadGenerator is a child of the

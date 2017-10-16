@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package tools.descartes.httploadgenerator.http;
+package tools.descartes.dlim.httploadgenerator.http;
 
 import java.io.File;
 import java.net.CookieManager;
@@ -23,9 +23,9 @@ import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.lib.jse.JsePlatform;
 
-import tools.descartes.httploadgenerator.http.lua.HTMLFunctions;
-import tools.descartes.httploadgenerator.http.lua.HTMLLuaFunctions.ExtractAllMatches;
-import tools.descartes.httploadgenerator.http.lua.HTMLLuaFunctions.GetMatches;
+import tools.descartes.dlim.httploadgenerator.http.lua.HTMLFunctions;
+import tools.descartes.dlim.httploadgenerator.http.lua.HTMLLuaFunctions.ExtractAllMatches;
+import tools.descartes.dlim.httploadgenerator.http.lua.HTMLLuaFunctions.GetMatches;
 
 /**
  * Stateful Generator for the next HTTP-GET or POST URL.

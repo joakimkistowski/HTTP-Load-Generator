@@ -131,9 +131,9 @@ public class Director extends Thread {
 			if (urlTimeout != null) {
 				try {
 					timout = Integer.parseInt(urlTimeout);
-					LOG.info("URL connection timout set to " + threadCount + " ms");
+					LOG.info("URL connection timout set to " + urlTimeout + " ms");
 				} catch (NumberFormatException e) {
-					LOG.warning("Invalid timout: " + threadCount);
+					LOG.warning("Invalid timout: " + urlTimeout);
 				}
 			} else {
 				LOG.info("No timout specified.");

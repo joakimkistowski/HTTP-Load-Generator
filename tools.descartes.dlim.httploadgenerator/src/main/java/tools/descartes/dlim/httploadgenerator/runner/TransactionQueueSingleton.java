@@ -17,7 +17,7 @@ package tools.descartes.dlim.httploadgenerator.runner;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
-import tools.descartes.httploadgenerator.http.HTTPTransaction;
+import tools.descartes.dlim.httploadgenerator.http.HTTPTransaction;
 
 /**
  * Singleton for saving a linked blocking queue of transaction instances for

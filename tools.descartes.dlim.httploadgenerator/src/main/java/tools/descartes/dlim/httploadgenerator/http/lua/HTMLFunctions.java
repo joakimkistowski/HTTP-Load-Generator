@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package tools.descartes.httploadgenerator.http.lua;
+package tools.descartes.dlim.httploadgenerator.http.lua;
 
 import java.util.ArrayList;
 import java.util.regex.Matcher;
