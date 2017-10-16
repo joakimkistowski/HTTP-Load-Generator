@@ -68,6 +68,7 @@ public class HTTPTransaction extends Transaction {
 
 			if (generator.getTimeout() > 0) {
 				con.setReadTimeout(generator.getTimeout());
+				con.setConnectTimeout(generator.getTimeout());
 			}
 			con.setRequestMethod(method);
 			con.setRequestProperty("User-Agent", USER_AGENT);
