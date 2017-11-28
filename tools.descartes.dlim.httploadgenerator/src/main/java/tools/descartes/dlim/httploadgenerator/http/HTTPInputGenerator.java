@@ -17,12 +17,16 @@ package tools.descartes.dlim.httploadgenerator.http;
 
 import java.io.File;
 import java.net.CookieManager;
+import java.net.CookiePolicy;
+import java.util.concurrent.TimeUnit;
 
 import org.luaj.vm2.Globals;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.lib.jse.JsePlatform;
 
+import okhttp3.JavaNetCookieJar;
+import okhttp3.OkHttpClient;
 import tools.descartes.dlim.httploadgenerator.http.lua.HTMLFunctions;
 import tools.descartes.dlim.httploadgenerator.http.lua.HTMLLuaFunctions.ExtractAllMatches;
 import tools.descartes.dlim.httploadgenerator.http.lua.HTMLLuaFunctions.GetMatches;
@@ -38,8 +42,9 @@ public class HTTPInputGenerator {
 	private static final String LUA_CALL = "onCall";
 
 
+	private final OkHttpClient httpClient;
+	
 	private int currentCallNum = 0;
-	private int timeout = -1;
 	private String lastInput = "";
 
 	private HTMLFunctions htmlFunctions = new HTMLFunctions("");
@@ -56,7 +61,14 @@ public class HTTPInputGenerator {
 	 * @param timeout The http read timeout.
 	 */
 	public HTTPInputGenerator(File scriptFile, int randomSeed, int timeout) {
-		this.timeout = timeout;
+		OkHttpClient.Builder httpClientBuilder = new OkHttpClient.Builder();
+		cookieManager.setCookiePolicy(CookiePolicy.ACCEPT_ALL);
+		httpClientBuilder = httpClientBuilder.cookieJar(new JavaNetCookieJar(cookieManager));
+		if (timeout > 0) {
+			httpClientBuilder = httpClientBuilder.readTimeout(timeout, TimeUnit.MILLISECONDS)
+				.connectTimeout(timeout, TimeUnit.MILLISECONDS);
+		}
+		httpClient = httpClientBuilder.build();
 		if (scriptFile != null) {
 			luaGlobals = JsePlatform.standardGlobals();
 			//luaGlobals.get("require").call(LuaValue.valueOf("tools.descartes.httploadgenerator.http.lua.HTML"));
@@ -67,6 +79,14 @@ public class HTTPInputGenerator {
 			luaGlobals.get("math").get("randomseed").call(LuaValue.valueOf(5));
 			luaGlobals.get("dofile").call(LuaValue.valueOf(scriptFile.getAbsolutePath()));
 		}
+	}
+
+	/**
+	 * Gets the http client.
+	 * @return The http client.
+	 */
+	public OkHttpClient getHttpClient() {
+		return httpClient;
 	}
 
 	/**
@@ -118,14 +138,6 @@ public class HTTPInputGenerator {
 	}
 	
 	/**
-	 * Get the cookie manager.
-	 * @return The cookie manager.
-	 */
-	public CookieManager getCookieManager() {
-		return cookieManager;
-	}
-	
-	/**
 	 * Get the last call that was generated on calling {@link #getNextInput()}.
 	 * @return The last call URL.
 	 */
@@ -149,11 +161,4 @@ public class HTTPInputGenerator {
 		currentCallNum--;
 	}
 
-	/**
-	 * Get the http url connection timeout.
-	 * @return The timeout.
-	 */
-	public int getTimeout() {
-		return timeout;
-	}
 }

@@ -4,8 +4,8 @@
 	Note that math.random is already initialized using a fixed seed (5) for reproducibility.
 --]]
 function onCycle()
-	userid = 1 + math.random(9999999)
-	prefix = "http://10.1.3.33/dvd/ds2/mysqlds2/web/php5/"
+	userid = 1 + math.random(20000)
+	prefix = "http://localhost/"
 	displayamount = math.random(10)
 	calls = {
 	"index.html",
@@ -27,7 +27,7 @@ end
 		Returns all lines in the returned text stream that match a provided regex.
 	- html.extractMatches( prefixRegex, postfixRegex )
 		Returns all matches that are preceeded by a prefixRegex match and followed by a postfixRegex match.
-		The regexes must one unique match for each line in which they apply.
+		The regexes must have one unique match for each line in which they apply.
 	- html.extractMatches( prefixRegex, matchingRegex, postfixRegex )
 		Variant of extractMatches with a matching regex defining the string that is to be extracted.
 --]]
