@@ -25,7 +25,7 @@ The load generator can be used for testing of web applications regarding testing
 ## 2. Getting Started with the Load Generator
 
 First build or download the [httploadgenetor.jar](https://se3.informatik.uni-wuerzburg.de/httploadgenerator/tools.descartes.dlim.httploadgenerator/target/httploadgenerator.jar). Deploy the httploadgenerator on two machines:
-1. The **director machine** (experiment controller): Usually your PC. This machine must have access to the load profile and request script to be run. In addition this machine must be able to communicate with the power meters (optional, we are not using a power meter in this _getting started_ section).
+1. The **director machine** (experiment controller): Usually your PC. This machine must have access to the load profile and request script to be run. In addition, this machine must be able to communicate with the power meters (optional, we are not using a power meter in this _getting started_ section).
 2. The **load generator machine**: The machine that sends the network loads. Usually a quite powerful machine. No additional files, except for the jar itself, are required on this machine. You may also choose to use multiple load generation machines if you do not have a single machine with sufficient power or network capabilities.
 
 In addition to the jar, you need a load intensity profile and a LUA script for generating the actual requests. We provide an example for each in the examplefiles directory:
@@ -77,7 +77,7 @@ Note, that the time stamp is always the middle of the interval. Meaning that it 
 
 ### 3.2 Scripting the Requests Themselves
 
-The requests are specified using a LUA script. We recommend modifying one of the examples, such as the [minimal example](https://github.com/joakimkistowski/HTTP-Load-Generator/tree/master/examplefiles/http_calls_minimal.lua) or the [Dell DVD Store example](https://github.com/joakimkistowski/HTTP-Load-Generator/tree/master/examplefiles/http_calls_dvd.lua). The example containt explanations in their code comments.
+The requests are specified using a LUA script. We recommend modifying one of the examples, such as the [minimal example](https://github.com/joakimkistowski/HTTP-Load-Generator/tree/master/examplefiles/http_calls_minimal.lua) or the [Dell DVD Store example](https://github.com/joakimkistowski/HTTP-Load-Generator/tree/master/examplefiles/http_calls_dvd.lua). The examples contain explanations in their code comments.
 
 Two LUA functions in the script are called from by HTTP Load Generator:
 * **onCycle()**: Is called at the beginning of each call cycle. No return value is expected. Initialize all global variables here. Note that _math.random_ is already initialized using a fixed seed (5) for reproducibility.
