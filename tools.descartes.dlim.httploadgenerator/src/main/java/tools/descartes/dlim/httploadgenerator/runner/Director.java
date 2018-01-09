@@ -150,7 +150,7 @@ public class Director extends Thread {
 
 			if (file != null && outName != null && !outName.isEmpty()) {
 				Director director = new Director(generatorAddress.split(":")[0].trim());
-				director.process(file, outName, scanner, randomBatchTimes,
+				director.process(file, outName, randomBatchTimes,
 						threadNum, timout, scriptPathRead, powerCommunicators);
 			}
 			powerCommunicators.forEach(pc -> pc.stopCommunicator());
@@ -192,7 +192,7 @@ public class Director extends Thread {
 	 * @param scriptPath The path of the script file that generates the specific requests.
 	 * @param powerCommunicators Communicators for communicating with power daemon (optional).
 	 */
-	public void process(File file, String outName, Scanner scanner, boolean randomBatchTimes,
+	public void process(File file, String outName, boolean randomBatchTimes,
 			int threadCount, int timeout, String scriptPath, List<IPowerCommunicator> powerCommunicators) {
 
 		try {
@@ -221,8 +221,7 @@ public class Director extends Thread {
 			 + "Failed Transactions,Avg Response Time,Final Batch Dispatch Time");
 			powerCommunicators.stream().forEachOrdered(pc -> writer.print(",Watts(" + pc.getCommunicatorName() + ")"));
 			
-			System.out.print("Press Enter to begin Execution");
-			outName = scanner.nextLine();
+			LOG.info("Starting Load Generation");
 
 			//setup initial run Variables
 			ExecutorService executor = null;
