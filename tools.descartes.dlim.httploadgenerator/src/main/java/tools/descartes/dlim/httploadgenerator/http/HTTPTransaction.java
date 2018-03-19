@@ -15,16 +15,13 @@
  */
 package tools.descartes.dlim.httploadgenerator.http;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import okhttp3.MediaType;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
+import org.eclipse.jetty.client.api.ContentResponse;
+import org.eclipse.jetty.client.api.Request;
 import tools.descartes.dlim.httploadgenerator.runner.TransactionQueueSingleton;
 import tools.descartes.dlim.httploadgenerator.runner.ResultTracker;
 import tools.descartes.dlim.httploadgenerator.runner.Transaction;
@@ -37,10 +34,8 @@ import tools.descartes.dlim.httploadgenerator.runner.Transaction;
  */
 public class HTTPTransaction extends Transaction {
 
-	private static final String USER_AGENT = "Mozilla/5.0";
+	
 	private static final String POST_SIGNAL = "[POST]";
-
-	private static final MediaType MEDIATYPE_FORM_URLENCODED = MediaType.parse("application/x-www-form-urlencoded");
 	
 	/** The constant logging instance. */
 	private static final Logger LOG = Logger.getLogger(HTTPTransaction.class.getName());
@@ -52,52 +47,43 @@ public class HTTPTransaction extends Transaction {
 	 */
 	public String process(HTTPInputGenerator generator) {
 		String url = generator.getNextInput().trim();
+		String method = "GET";
+		if (url.startsWith("[")) {
+			if (url.startsWith(POST_SIGNAL)) {
+				method = "POST";
+			}
+			url = url.replaceFirst("\\[.*\\]", "");
+		}
+		Request request = generator.initializeHTTPRequest(url, method);
+		
+		long startTime = System.currentTimeMillis();
 		try {
-			String method = "GET";
-			if (url.startsWith("[")) {
-				if (url.startsWith(POST_SIGNAL)) {
-					method = "POST";
-				}
-				url = url.replaceFirst("\\[.*\\]", "");
-			}
-			Request request;
-			if (method.equals("POST")) {
-				String[] query = url.split("\\?");
-				String formData = "";
-				if (query.length > 1) {
-					formData = query[1];
-				}
-				request = new Request.Builder().url(url).header("User-Agent", USER_AGENT)
-						.post(RequestBody.create(MEDIATYPE_FORM_URLENCODED, formData)).build();
+			ContentResponse response = request.send();
+			if (response.getStatus() >= 400) {
+				generator.revertLastCall();
+				LOG.log(Level.FINEST, "Received error response code: " + response.getStatus());
 			} else {
-				request = new Request.Builder().url(url).header("User-Agent", USER_AGENT).get().build();
+				String responseBody = response.getContentAsString();
+				ResultTracker.TRACKER.logResponseTime(System.currentTimeMillis() - startTime);
+				
+				//store result
+				generator.resetHTMLFunctions(responseBody);
+				return responseBody;
 			}
-			
-			long startTime = System.currentTimeMillis();
-			try (Response httpResponse = generator.getHttpClient().newCall(request).execute()) {
-				if (httpResponse.code() >= 400) {
-					generator.revertLastCall();
-					LOG.log(Level.FINEST, "Received error response code: " + httpResponse.code());
-				} else {
-					String responseBody = httpResponse.body().string();
-					ResultTracker.TRACKER.logResponseTime(System.currentTimeMillis() - startTime);
-					
-					//store result
-					generator.resetHTMLFunctions(responseBody);
-					return responseBody;
-				}
-			}
-		} catch (MalformedURLException e) {
-			LOG.log(Level.SEVERE, "Malformed URL: " + url);
+		} catch (java.util.concurrent.ExecutionException e) {
+			LOG.log(Level.SEVERE, "ExecutionException in call for URL: " + url + "; Cause: " + e.getCause().toString());
 			generator.revertLastCall();
-		} catch (ProtocolException e) {
-			LOG.log(Level.SEVERE, "ProtocolException: " + e.getMessage());
+		} catch (CancellationException e) {
+			LOG.log(Level.SEVERE, "CancellationException: " + url + "; " + e.getMessage());
 			generator.revertLastCall();
-		} catch (java.net.SocketTimeoutException e) {
+		} catch (InterruptedException e) {
+			LOG.log(Level.SEVERE, "InterruptedException: " + e.getMessage());
 			generator.revertLastCall();
-		} catch (IOException e) {
-			LOG.log(Level.SEVERE, "General IO Exception Occured with Input @ " + url + ": " + e.getMessage());
+		} catch (TimeoutException e) {
 			generator.revertLastCall();
+//		} catch (IOException e) {
+//			LOG.log(Level.SEVERE, "General IOException in call for URL: " + url + "; Cause: " + e.getCause().toString());
+//			generator.revertLastCall();
 		}
 		return null;
 	}

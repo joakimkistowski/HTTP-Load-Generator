@@ -16,17 +16,16 @@
 package tools.descartes.dlim.httploadgenerator.http;
 
 import java.io.File;
-import java.net.CookieManager;
-import java.net.CookiePolicy;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 
+import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.client.api.Request;
 import org.luaj.vm2.Globals;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.lib.jse.JsePlatform;
 
-import okhttp3.JavaNetCookieJar;
-import okhttp3.OkHttpClient;
 import tools.descartes.dlim.httploadgenerator.http.lua.HTMLFunctions;
 import tools.descartes.dlim.httploadgenerator.http.lua.HTMLLuaFunctions.ExtractAllMatches;
 import tools.descartes.dlim.httploadgenerator.http.lua.HTMLLuaFunctions.GetMatches;
@@ -38,17 +37,21 @@ import tools.descartes.dlim.httploadgenerator.http.lua.HTMLLuaFunctions.GetMatch
  */
 public class HTTPInputGenerator {
 
+	private static final Logger LOG = Logger.getLogger(HTTPInputGenerator.class.getName());
+	
+	private static final String USER_AGENT = "Mozilla/5.0";
+	
 	private static final String LUA_CYCLE_INIT = "onCycle";
 	private static final String LUA_CALL = "onCall";
 
 
-	private final OkHttpClient httpClient;
+	private final HttpClient httpClient;
 	
 	private int currentCallNum = 0;
 	private String lastInput = "";
+	private int timeout = 0;
 
 	private HTMLFunctions htmlFunctions = new HTMLFunctions("");
-	private CookieManager cookieManager = new CookieManager();
 	private Globals luaGlobals;
 	/**
 	 * Constructs a new HTTPInputGenerator using a Lua generation script.
@@ -61,14 +64,18 @@ public class HTTPInputGenerator {
 	 * @param timeout The http read timeout.
 	 */
 	public HTTPInputGenerator(File scriptFile, int randomSeed, int timeout) {
-		OkHttpClient.Builder httpClientBuilder = new OkHttpClient.Builder();
-		cookieManager.setCookiePolicy(CookiePolicy.ACCEPT_ALL);
-		httpClientBuilder = httpClientBuilder.cookieJar(new JavaNetCookieJar(cookieManager));
+		httpClient = new HttpClient();
+		
 		if (timeout > 0) {
-			httpClientBuilder = httpClientBuilder.readTimeout(timeout, TimeUnit.MILLISECONDS)
-				.connectTimeout(timeout, TimeUnit.MILLISECONDS);
+			httpClient.setConnectTimeout(timeout);
+			this.timeout = timeout;
 		}
-		httpClient = httpClientBuilder.build();
+		try {
+			httpClient.start();
+		} catch (Exception e) {
+			LOG.severe("Could not start HTTP client; Exception: " + e.getMessage());
+		}
+		
 		if (scriptFile != null) {
 			luaGlobals = JsePlatform.standardGlobals();
 			//luaGlobals.get("require").call(LuaValue.valueOf("tools.descartes.httploadgenerator.http.lua.HTML"));
@@ -82,12 +89,38 @@ public class HTTPInputGenerator {
 	}
 
 	/**
-	 * Gets the http client.
-	 * @return The http client.
+	 * Builds a request using the HTTP client and current cookies.
+	 * @return The http client's initialized request.
 	 */
-	public OkHttpClient getHttpClient() {
-		return httpClient;
+	public Request initializeHTTPRequest(String url, String method) {
+	Request request;
+		if (method.equalsIgnoreCase("POST")) {
+//			String[] query = url.split("\\?");
+//			String formData = "";
+//			if (query.length > 1) {
+//				formData = query[1];
+//			}
+//			request = new Request.Builder().url(url).header()
+//					.post(RequestBody.create(MEDIATYPE_FORM_URLENCODED, formData)).build();
+			
+			 request = httpClient.POST(url);
+		} else {
+			request = httpClient.newRequest(url);
+		}
+		request = request.header("User-Agent", USER_AGENT);
+		if (timeout > 0) {
+			request = request.timeout(timeout, TimeUnit.MILLISECONDS);
+		}
+		return request;
 	}
+	
+//	/**
+//	 * Parses a response's Cookies to enable their use in future requests.
+//	 * @param r
+//	 */
+//	public void handleResponseCookies(Response r) {
+//		
+//	}
 
 	/**
 	 * Returns the next URL for the HTTPTransaction. Runs the script.
@@ -114,7 +147,9 @@ public class HTTPInputGenerator {
 	 */
 	private void restartCycle() {
 		currentCallNum = 1;
-		cookieManager.getCookieStore().removeAll();
+		if (httpClient != null && httpClient.getCookieStore() != null) {
+			httpClient.getCookieStore().removeAll();
+		}
 		LuaValue cycleInit = luaGlobals.get(LUA_CYCLE_INIT);
 		if (!cycleInit.isnil()) {
 			cycleInit.call();
@@ -159,6 +194,10 @@ public class HTTPInputGenerator {
 	 */
 	public void revertLastCall() {
 		currentCallNum--;
+	}
+
+	public int getTimeout() {
+		return timeout;
 	}
 
 }
