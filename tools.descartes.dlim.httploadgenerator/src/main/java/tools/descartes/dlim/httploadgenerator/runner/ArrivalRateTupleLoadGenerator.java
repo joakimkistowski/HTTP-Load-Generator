@@ -109,7 +109,7 @@ public class ArrivalRateTupleLoadGenerator extends AbstractLoadGenerator {
 			 * Mean wait time between batches of transactions is 10 ms or 1/10th
 			 * of the time between two arrival rate tuples.
 			 */
-			int meanWaitTime = Math.min(10, (int) (arrRates.get(0).getTimeStamp() * 1000) / 10);
+			int defaultMeanWaitTime = Math.min(10, (int) (arrRates.get(0).getTimeStamp() * 1000) / 10);
 			long timeZero = System.currentTimeMillis();
 			lastCompletedCount = 0;
 			double nextTimeStamp = 0;
@@ -122,6 +122,12 @@ public class ArrivalRateTupleLoadGenerator extends AbstractLoadGenerator {
 				// set target arrival rate and next time target
 				targetArrivalsInInterval += (int) t.getArrivalRate();
 				long targetTime = (long) (1000.0 * t.getTimeStamp());
+				
+				//Set mean wait time. Ensure it is not too short for very low loads.
+				long meanWaitTime = defaultMeanWaitTime;
+				if (targetArrivalsInInterval < 10 && targetArrivalsInInterval > 1) {
+					meanWaitTime = (targetTime - currentTime) / targetArrivalsInInterval; 
+				}
 
 				/*
 				 * Dispatches the work in small batches that are then
@@ -151,8 +157,8 @@ public class ArrivalRateTupleLoadGenerator extends AbstractLoadGenerator {
 			while (executor.getActiveCount() > 0) {
 				long currentTime = System.currentTimeMillis() - timeZero;
 
-				while (currentTime - (nextTimeStamp) < -meanWaitTime) {
-					sleep(meanWaitTime);
+				while (currentTime - (nextTimeStamp) < -defaultMeanWaitTime) {
+					sleep(defaultMeanWaitTime);
 					currentTime = System.currentTimeMillis() - timeZero;
 				}
 

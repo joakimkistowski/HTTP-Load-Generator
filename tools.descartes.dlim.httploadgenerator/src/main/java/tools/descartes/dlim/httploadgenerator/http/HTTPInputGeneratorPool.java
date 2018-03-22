@@ -39,8 +39,8 @@ public final class HTTPInputGeneratorPool {
 		if (!script.exists()) {
 			LOG.severe("Lua script does not exist at: " + luaScriptPath);
 		}
-		 // We place an extra input generator in the pool, just to be safe.
-		for (int i = 0; i < threadCount + 1; i++) {
+		 // We place as many input generators as threads in the pool.
+		for (int i = 0; i < threadCount; i++) {
 			try {
 				queue.put(new HTTPInputGenerator(script, i, timeout));
 			} catch (InterruptedException e) {
