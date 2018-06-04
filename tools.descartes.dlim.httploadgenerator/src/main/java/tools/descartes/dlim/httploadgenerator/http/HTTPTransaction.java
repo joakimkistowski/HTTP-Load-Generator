@@ -70,6 +70,8 @@ public class HTTPTransaction extends Transaction {
 				generator.resetHTMLFunctions(responseBody);
 				return responseBody;
 			}
+		} catch (TimeoutException e) {
+			generator.revertLastCall();
 		} catch (java.util.concurrent.ExecutionException e) {
 			LOG.log(Level.SEVERE, "ExecutionException in call for URL: " + url + "; Cause: " + e.getCause().toString());
 			generator.revertLastCall();
@@ -78,8 +80,6 @@ public class HTTPTransaction extends Transaction {
 			generator.revertLastCall();
 		} catch (InterruptedException e) {
 			LOG.log(Level.SEVERE, "InterruptedException: " + e.getMessage());
-			generator.revertLastCall();
-		} catch (TimeoutException e) {
 			generator.revertLastCall();
 		}
 		return null;
