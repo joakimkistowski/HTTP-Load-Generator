@@ -36,6 +36,8 @@ public final class ResultTracker {
 	
 	private long invalidTransactionsPerMeasurementInterval = 0;
 	private long invalidTransactionsTotal = 0;
+	private long droppedTransactionsPerMeasurementInterval = 0;
+	private long droppedTransactionsTotal = 0;
 	
 	private BlockingQueue<Long> responseTimeQueue = new LinkedBlockingQueue<>();
 	
@@ -49,15 +51,25 @@ public final class ResultTracker {
 	public synchronized void reset() {
 		invalidTransactionsPerMeasurementInterval = 0;
 		invalidTransactionsTotal = 0;
+		droppedTransactionsPerMeasurementInterval = 0;
+		droppedTransactionsTotal = 0;
 		responseTimeQueue.clear();
 	}
 	
 	/**
 	 * Adds an invalid transaction to the counter.
 	 */
-	public synchronized void incrementInvalidTransctionCount() {
+	public synchronized void incrementInvalidTransactionCount() {
 		invalidTransactionsPerMeasurementInterval++;
 		invalidTransactionsTotal++;
+	}
+	
+	/**
+	 * Adds an dropped transaction to the counter.
+	 */
+	public synchronized void incrementDroppedTransactionCount() {
+		droppedTransactionsPerMeasurementInterval++;
+		droppedTransactionsTotal++;
 	}
 	
 	/**
@@ -71,11 +83,29 @@ public final class ResultTracker {
 	}
 	
 	/**
+	 * Returns the current dropped transaction count and resets the counter.
+	 * @return The current dropped transaction count.
+	 */
+	public synchronized long getAndResetDroppedTransactionCount() {
+		long tmpCount = droppedTransactionsPerMeasurementInterval;
+		droppedTransactionsPerMeasurementInterval = 0;
+		return tmpCount;
+	}
+	
+	/**
 	 * Returns the total invalid transaction counter since initialization or the last call of {@link #reset()}.
 	 * @return The total invalid transaction counter.
 	 */
 	public synchronized long getTotalInvalidTransactionCount() {
 		return invalidTransactionsTotal;
+	}
+	
+	/**
+	 * Returns the total dropped transaction counter since initialization or the last call of {@link #reset()}.
+	 * @return The total dropped transaction counter.
+	 */
+	public synchronized long getTotalDroppedTransactionCount() {
+		return droppedTransactionsTotal;
 	}
 	
 	/**

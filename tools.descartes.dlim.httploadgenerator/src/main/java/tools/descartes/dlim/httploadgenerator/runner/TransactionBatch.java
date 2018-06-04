@@ -60,14 +60,15 @@ public class TransactionBatch {
 	 *            The thread pool to execute the transactions.
 	 */
 	public void executeBatch(ThreadPoolExecutor executor) {
-		// create singleton with queue to prevent new instances every time
-
+		//use a single start time approximation for all transactions in the batch to reduce overhead
+		long startTime = System.currentTimeMillis();
 		TransactionQueueSingleton transactionQueue = TransactionQueueSingleton.getInstance();
 		for (int i = 0; i < size; i++) {
-			Runnable transaction = transactionQueue.getQueueElement();
+			Transaction transaction = transactionQueue.getQueueElement();
 			if (transaction == null) {
 				transaction = new HTTPTransaction();
 			}
+			transaction.setStartTime(startTime);
 			executor.execute(transaction);
 		}
 	}

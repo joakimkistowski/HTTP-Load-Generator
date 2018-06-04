@@ -304,6 +304,7 @@ public class Director extends Thread {
 		int loadIntensity = 0;
 		int successfulTransactions = 0;
 		int failedTransactions = 0;
+		int droppedTransactions = 0;
 		ArrayList<Double> responseTimes = new ArrayList<Double>();
 		ArrayList<Double> finalBatchTimes = new ArrayList<Double>();
 		for (LoadGeneratorCommunicator communicator : communicators) {
@@ -333,19 +334,20 @@ public class Director extends Thread {
 					successfulTransactions += Integer.parseInt(tokens[2].trim());
 					responseTimes.add(Double.parseDouble(tokens[3].trim()));
 					failedTransactions += Integer.parseInt(tokens[4].trim());
-					finalBatchTimes.add(Double.parseDouble(tokens[5].trim()));
+					droppedTransactions += Integer.parseInt(tokens[5].trim());
+					finalBatchTimes.add(Double.parseDouble(tokens[6].trim()));
 				}
 			}
 		}
 		double avgResponseTime = responseTimes.stream().mapToDouble(d -> d.doubleValue()).average().getAsDouble();
 		double finalBatchTime = finalBatchTimes.stream().mapToDouble(d -> d.doubleValue()).max().getAsDouble();
-		logState(targetTime, loadIntensity, successfulTransactions, failedTransactions,
+		logState(targetTime, loadIntensity, successfulTransactions, failedTransactions, droppedTransactions,
 				avgResponseTime, finalBatchTime, powerCommunicator, writer);
 		return false;
 	}
 
 	private void logState(double targetTime, int loadIntensity, int successfulTransactions, int failedTransactions,
-			double avgResponseTime, double finalBatchTime, List<IPowerCommunicator> powerCommunicators,
+			int droppedTransactions, double avgResponseTime, double finalBatchTime, List<IPowerCommunicator> powerCommunicators,
 			PrintWriter writer) {
 		//get Power
 		List<Double> powers = null;
@@ -357,8 +359,9 @@ public class Director extends Thread {
 		}
 		System.out.println("Target Time = " + targetTime
 				+ "; Load Intensity = " + loadIntensity
-				+ "; Successful Transactions = " + successfulTransactions
-				+ "; Failed Transactions = " + failedTransactions);
+				+ "; #Success = " + successfulTransactions
+				+ "; #Failed = " + failedTransactions
+				+ "; #Dropped = " + droppedTransactions);
 		writer.print(targetTime + "," + loadIntensity + ","
 				+ successfulTransactions + "," + failedTransactions + ","
 				+ avgResponseTime + "," + finalBatchTime);

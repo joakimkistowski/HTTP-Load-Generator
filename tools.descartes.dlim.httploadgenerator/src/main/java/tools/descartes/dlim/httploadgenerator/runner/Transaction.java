@@ -17,13 +17,15 @@ package tools.descartes.dlim.httploadgenerator.runner;
 
 /**
  * Abstract transaction class.
- * @author Joakim von Kistkwsi
+ * @author Joakim von Kistowski
  *
  */
 public abstract class Transaction implements Runnable {
 
 	//problemsize for computing problems
 	private static int problemsize = 10000;
+	
+	private long startTimeMs = 0;
 	
 	@Override
 	public abstract void run();
@@ -42,6 +44,24 @@ public abstract class Transaction implements Runnable {
 	 */
 	protected static int getProblemSize() {
 		return problemsize;
+	}
+	
+	/**
+	 * Set the start time of the transaction when queuing it into the threadpool.
+	 * This start time may then be used for execution time logging, etc.
+	 * @param startTimeMs The start time in system milliseconds.
+	 */
+	public void setStartTime(long startTimeMs) {
+		this.startTimeMs = startTimeMs;
+	}
+	
+	/**
+	 * Gets the Transaction's start time. The start time is the time at which it was queued
+	 * into the threadpool.
+	 * @return The start time in system milliseconds.
+	 */
+	public long getStartTime() {
+		return startTimeMs;
 	}
 
 }

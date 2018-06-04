@@ -274,14 +274,17 @@ public abstract class AbstractLoadGenerator extends Thread {
 	 * @param avgResponseTime
 	 * 			  average response time
 	 * @param invalidTransactionCount
-	 * 			  Count of invalid transactions for the measuremetn interval.
+	 * 			  Count of invalid transactions for the measurement interval.
+	 * * @param droppedTransactionCount
+	 * 			  Count of dropped transactions for the measurement interval.
 	 * @param actualtime
 	 *            actual time
 	 */
 	protected void sendToDirector(double targettime, int loadintensity, long throughput,
-				double avgResponseTime, long invalidTransactionCount, double actualtime) {
+				double avgResponseTime, long invalidTransactionCount, long droppedTransactionCount, double actualtime) {
 		out.println("" + targettime + "," + loadintensity + "," + throughput
-				+ "," + avgResponseTime + "," + invalidTransactionCount + "," + actualtime);
+				+ "," + avgResponseTime + "," + invalidTransactionCount + ","
+				+ droppedTransactionCount + "," + actualtime);
 	}
 
 	/**

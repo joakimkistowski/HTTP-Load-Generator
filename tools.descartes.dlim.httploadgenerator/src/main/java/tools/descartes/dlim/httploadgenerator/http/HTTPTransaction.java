@@ -16,15 +16,19 @@
 package tools.descartes.dlim.httploadgenerator.http;
 
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
+
 import tools.descartes.dlim.httploadgenerator.runner.TransactionQueueSingleton;
 import tools.descartes.dlim.httploadgenerator.runner.ResultTracker;
 import tools.descartes.dlim.httploadgenerator.runner.Transaction;
+import tools.descartes.dlim.httploadgenerator.runner.TransactionDroppedException;
+import tools.descartes.dlim.httploadgenerator.runner.TransactionInvalidException;
 
 /**
  * HTTP transaction sends HTML requests to a HTTP web server based on a LUA script.
@@ -45,7 +49,12 @@ public class HTTPTransaction extends Transaction {
 	 * @param generator The input generator to use.
 	 * @return HTML Response of the web server.
 	 */
-	public String process(HTTPInputGenerator generator) {
+	public String process(HTTPInputGenerator generator) throws TransactionDroppedException, TransactionInvalidException {
+		long processStartTime = System.currentTimeMillis();
+		if (generator.getTimeout() > 0 && processStartTime - getStartTime() > generator.getTimeout()) {
+			throw new TransactionDroppedException("Wait time in queue too long. "
+					+ String.valueOf(processStartTime - getStartTime()) + " ms passed before transaction was even started.");
+		}
 		String url = generator.getNextInput().trim();
 		String method = "GET";
 		if (url.startsWith("[")) {
@@ -56,15 +65,15 @@ public class HTTPTransaction extends Transaction {
 		}
 		Request request = generator.initializeHTTPRequest(url, method);
 		
-		long startTime = System.currentTimeMillis();
 		try {
 			ContentResponse response = request.send();
 			if (response.getStatus() >= 400) {
 				generator.revertLastCall();
 				LOG.log(Level.FINEST, "Received error response code: " + response.getStatus());
+				throw new TransactionInvalidException("Error code: " + response.getStatus());
 			} else {
 				String responseBody = response.getContentAsString();
-				ResultTracker.TRACKER.logResponseTime(System.currentTimeMillis() - startTime);
+				ResultTracker.TRACKER.logResponseTime(System.currentTimeMillis() - processStartTime);
 				
 				//store result
 				generator.resetHTMLFunctions(responseBody);
@@ -72,7 +81,7 @@ public class HTTPTransaction extends Transaction {
 			}
 		} catch (TimeoutException e) {
 			generator.revertLastCall();
-		} catch (java.util.concurrent.ExecutionException e) {
+		} catch (ExecutionException e) {
 			LOG.log(Level.SEVERE, "ExecutionException in call for URL: " + url + "; Cause: " + e.getCause().toString());
 			generator.revertLastCall();
 		} catch (CancellationException e) {
@@ -88,11 +97,14 @@ public class HTTPTransaction extends Transaction {
 	@Override
 	public void run() {
 		HTTPInputGenerator generator = HTTPInputGeneratorPool.getPool().takeFromPool();
-		String response = this.process(generator);
-		HTTPInputGeneratorPool.getPool().releaseBackToPool(generator);
-		if (response == null) {
-			ResultTracker.TRACKER.incrementInvalidTransctionCount();
+		try {
+			this.process(generator);
+		} catch (TransactionDroppedException e) {
+			ResultTracker.TRACKER.incrementDroppedTransactionCount();
+		} catch (TransactionInvalidException e) {
+			ResultTracker.TRACKER.incrementInvalidTransactionCount();
 		}
+		HTTPInputGeneratorPool.getPool().releaseBackToPool(generator);
 		TransactionQueueSingleton transactionQueue = TransactionQueueSingleton.getInstance();
 		transactionQueue.addQueueElement(this);
 	}

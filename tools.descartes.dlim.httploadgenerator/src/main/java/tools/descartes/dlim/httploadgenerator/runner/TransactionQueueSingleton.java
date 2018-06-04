@@ -34,7 +34,7 @@ public final class TransactionQueueSingleton {
 	private static final Logger LOG = Logger.getLogger(TransactionQueueSingleton.class.getName());
 	
 	/** A linked blocking queue of transactions for better performance. */
-	private LinkedBlockingQueue<Runnable> transactionQueue = new LinkedBlockingQueue<Runnable>();
+	private LinkedBlockingQueue<Transaction> transactionQueue = new LinkedBlockingQueue<Transaction>();
 
 	/** One hidden instance of the type of the own class. */
 	private static TransactionQueueSingleton instance = null;
@@ -82,7 +82,7 @@ public final class TransactionQueueSingleton {
 	 * 
 	 * @return Queue with transaction instances.
 	 */
-	public Runnable getQueueElement() {
+	public Transaction getQueueElement() {
 		return transactionQueue.poll();
 	}
 
@@ -93,7 +93,7 @@ public final class TransactionQueueSingleton {
 	 * @param transaction
 	 *            The transaction to be added to the list.
 	 */
-	public void addQueueElement(Runnable transaction) {
+	public void addQueueElement(Transaction transaction) {
 		transactionQueue.add(transaction);
 	}
 
