@@ -81,9 +81,6 @@ public class HTTPTransaction extends Transaction {
 			generator.revertLastCall();
 		} catch (TimeoutException e) {
 			generator.revertLastCall();
-//		} catch (IOException e) {
-//			LOG.log(Level.SEVERE, "General IOException in call for URL: " + url + "; Cause: " + e.getCause().toString());
-//			generator.revertLastCall();
 		}
 		return null;
 	}

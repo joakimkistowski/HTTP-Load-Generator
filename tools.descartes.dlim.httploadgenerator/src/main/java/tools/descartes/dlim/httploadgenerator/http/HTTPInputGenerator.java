@@ -78,7 +78,6 @@ public class HTTPInputGenerator {
 		
 		if (scriptFile != null) {
 			luaGlobals = JsePlatform.standardGlobals();
-			//luaGlobals.get("require").call(LuaValue.valueOf("tools.descartes.httploadgenerator.http.lua.HTML"));
 			LuaValue library = new LuaTable();
 			library.set("getMatches", new GetMatches(htmlFunctions));
 			library.set("extractMatches", new ExtractAllMatches(htmlFunctions));
@@ -95,32 +94,17 @@ public class HTTPInputGenerator {
 	public Request initializeHTTPRequest(String url, String method) {
 	Request request;
 		if (method.equalsIgnoreCase("POST")) {
-//			String[] query = url.split("\\?");
-//			String formData = "";
-//			if (query.length > 1) {
-//				formData = query[1];
-//			}
-//			request = new Request.Builder().url(url).header()
-//					.post(RequestBody.create(MEDIATYPE_FORM_URLENCODED, formData)).build();
-			
 			 request = httpClient.POST(url);
 		} else {
 			request = httpClient.newRequest(url);
 		}
 		request = request.header("User-Agent", USER_AGENT);
 		if (timeout > 0) {
-			request = request.timeout(timeout, TimeUnit.MILLISECONDS);
+			request = request.timeout(timeout, TimeUnit.MILLISECONDS)
+					.idleTimeout(timeout, TimeUnit.MILLISECONDS);
 		}
 		return request;
 	}
-	
-//	/**
-//	 * Parses a response's Cookies to enable their use in future requests.
-//	 * @param r
-//	 */
-//	public void handleResponseCookies(Response r) {
-//		
-//	}
 
 	/**
 	 * Returns the next URL for the HTTPTransaction. Runs the script.
@@ -196,6 +180,10 @@ public class HTTPInputGenerator {
 		currentCallNum--;
 	}
 
+	/**
+	 * Get the timeout.
+	 * @return The timeout in Milliseconds.
+	 */
 	public int getTimeout() {
 		return timeout;
 	}
