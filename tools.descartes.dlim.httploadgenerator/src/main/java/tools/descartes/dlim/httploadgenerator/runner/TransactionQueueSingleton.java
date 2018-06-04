@@ -16,8 +16,8 @@
 package tools.descartes.dlim.httploadgenerator.runner;
 
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Logger;
 
-import tools.descartes.dlim.httploadgenerator.http.HTTPTransaction;
 
 /**
  * Singleton for saving a linked blocking queue of transaction instances for
@@ -30,6 +30,9 @@ import tools.descartes.dlim.httploadgenerator.http.HTTPTransaction;
  */
 public final class TransactionQueueSingleton {
 
+	/** The constant logging instance. */
+	private static final Logger LOG = Logger.getLogger(TransactionQueueSingleton.class.getName());
+	
 	/** A linked blocking queue of transactions for better performance. */
 	private LinkedBlockingQueue<Runnable> transactionQueue = new LinkedBlockingQueue<Runnable>();
 
@@ -55,13 +58,21 @@ public final class TransactionQueueSingleton {
 	}
 
 	/**
-	 * Creates a new queue of transactions.
+	 * Initializes a number of transactions. The pre-initialization is intended to reduce
+	 * dispatching times during load generation.
+	 * @param transactionClass Class of the transaction to initialize. Must have a default Constructor.
+	 * @param numInitialTransactions Number of transactions to pre-initialize.
 	 */
-	public void renewQueue() {
-		transactionQueue = new LinkedBlockingQueue<Runnable>();
-		// Initialize Transactions before run
-		for (int i = 0; i < 200; i++) {
-			transactionQueue.add(new HTTPTransaction());
+	public void preInitializeTransactions(Class<? extends Transaction> transactionClass, int numInitialTransactions) {
+		for (int i = 0; i < numInitialTransactions; i++) {
+			try {
+				transactionQueue.add(transactionClass.newInstance());
+			} catch (InstantiationException e) {
+				LOG.severe("Error instantiating transaction object of class " + transactionClass.getName()
+				+ "; Does the class have the default Constructor?\n Exception: " + e.getMessage());
+			} catch (IllegalAccessException e) {
+				LOG.severe("IllegalAccessException intantiating transaction class: " + e.getMessage());
+			}
 		}
 	}
 
@@ -72,9 +83,7 @@ public final class TransactionQueueSingleton {
 	 * @return Queue with transaction instances.
 	 */
 	public Runnable getQueueElement() {
-		Runnable temp = transactionQueue.element();
-		transactionQueue.remove();
-		return temp;
+		return transactionQueue.poll();
 	}
 
 	/**

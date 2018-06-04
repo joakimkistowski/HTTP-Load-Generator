@@ -29,6 +29,7 @@ import java.util.logging.Logger;
 
 import tools.descartes.dlim.httploadgenerator.generator.ArrivalRateTuple;
 import tools.descartes.dlim.httploadgenerator.http.HTTPInputGeneratorPool;
+import tools.descartes.dlim.httploadgenerator.http.HTTPTransaction;
 
 /**
  * The class ArrivalRateTupleLoadGenerator is a child of the
@@ -104,6 +105,7 @@ public class ArrivalRateTupleLoadGenerator extends AbstractLoadGenerator {
 			LinkedBlockingQueue<Runnable> executorQueue = new LinkedBlockingQueue<Runnable>();
 			executor = new ThreadPoolExecutor(numberOfThreads, numberOfThreads, 0, TimeUnit.MILLISECONDS,
 					executorQueue);
+			TransactionQueueSingleton.getInstance().preInitializeTransactions(HTTPTransaction.class, 400);
 
 			/*
 			 * Mean wait time between batches of transactions is 10 ms or 1/10th

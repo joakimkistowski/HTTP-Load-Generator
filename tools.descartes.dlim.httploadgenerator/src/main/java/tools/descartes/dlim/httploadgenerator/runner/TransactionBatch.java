@@ -15,7 +15,6 @@
  */
 package tools.descartes.dlim.httploadgenerator.runner;
 
-import java.util.Queue;
 import java.util.Random;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -64,31 +63,13 @@ public class TransactionBatch {
 		// create singleton with queue to prevent new instances every time
 
 		TransactionQueueSingleton transactionQueue = TransactionQueueSingleton.getInstance();
-		transactionQueue.renewQueue();
 		for (int i = 0; i < size; i++) {
-			if (!transactionQueue.queueIsEmpty()) {
-				// List of Transactions instead of always getting new ones
-				executor.execute(transactionQueue.getQueueElement());
-			} else {
-				executor.execute(new HTTPTransaction());
+			Runnable transaction = transactionQueue.getQueueElement();
+			if (transaction == null) {
+				transaction = new HTTPTransaction();
 			}
+			executor.execute(transaction);
 		}
-	}
-
-	/**
-	 * Queue a new transaction.
-	 * @param executor The executor to queue in.
-	 * @param transactionQueue The transaction queue.
-	 * @return THe transaction queue.
-	 */
-	public Queue<Transaction> executeBatch(ThreadPoolExecutor executor,
-			Queue<Transaction> transactionQueue) {
-		for (int i = 0; i < size; i++) {
-			if (!transactionQueue.isEmpty()) {
-				executor.execute(transactionQueue.element());
-			}
-		}
-		return transactionQueue;
 	}
 
 	/**
