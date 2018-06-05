@@ -36,19 +36,18 @@ Download both files and place them on the director machine. For simplicity, we w
 
 Now, on the **load generator machine** start the HTTP Load Generator in load generator mode, using the following command line with the _-l_ switch. If you use multiple load generator machines, do this on each of them:
 
-    $ java -jar httploadgenerator.jar -l
+    $ java -jar httploadgenerator.jar loadgenerator
 
 Next, on the **director machine** start the HTTP Load Generator in director mode:
 
-    $ java -jar httploadgenerator.jar -d -s IP_OF_THE_LOAD_GENERATOR_MACHINE -a curveArrivalRates.csv -o testlog.csv -r 5 -l http_calls_minimal.lua
+    $ java -jar httploadgenerator.jar director --ip IP_OF_THE_LOAD_GENERATOR_MACHINE --load curveArrivalRates.csv -o testlog.csv --lua http_calls_minimal.lua
 
 The director call does the following:
-* _-d_ starts the director mode.
-* _-s_ specifies the address of the load generator machine. For multiple load generators, use a comma delimiter (no white spaces!).
-* _-a_ specifies the load intensity (*a*rrival rate) profile.
-* _-o_ specifies the name of the *o*utput log, containing the results.
-* _-r_ specifies the random seed (always specify it for reproducibility)
-* _-l_ specifies the *L*UA script.
+* `director` starts the director mode.
+* `--ip` specifies the address of the load generator machine. For multiple load generators, use a comma delimiter (no white spaces!).
+* `--load` specifies the load intensity (arrival rate) profile.
+* `-o` specifies the name of the *o*utput log, containing the results.
+* `--lua` specifies the *L*UA script.
 
 The director will now connect with the load generator, send the load intensity profile, script, and other settings. It will then prompt you to press enter to start the test. Once the test has concluded, the output log file will appear in the directory.
 
@@ -104,42 +103,83 @@ The HTTP Load Generator supports connecting to power analyzer daemons. The gener
 
 We provide a **IPowerCommunicator** interface in the _tools.descartes.dlim.httploadgenerator.power_ package. Implement your own power daemon communicator against this interface. The _HIOKICommunicator_ is a functioning reference implementation that supports ethernet-capable HIOKI power measurement devices. The _TMCTLDCommunicator_ can be used as a further example implementation.
 
-To start the HTTP Load Generator with your power communicator, add it to the classpath and then specify the fully quailified class name of your communicator using the _-c_ switch of the HTTP Load Generator in director mode. Use the _-p_ switch to specify the network address of your power daemon. You may enter multiple, comma separated (no whitespeces!), addresses. If you do, the director will instantiate a power communicator for each of those addresses and log its results in a separate column.
+To start the HTTP Load Generator with your power communicator, add it to the classpath and then specify the fully quailified class name of your communicator using the _-c_ switch of the HTTP Load Generator in director mode. Use the _-p_ switch to specify the network address of your power daemon. You may enter multiple comma separated addresses. If you do, the director will instantiate a power communicator for each of those addresses and log its results in a separate column.
 
 Example (with the power communicator compiled into the httploadgenerator.jar):
 
-    $ java -jar httploadgenerator.jar -d -s LOADGENIP -a myArrivalRates.csv -o myLog.csv -p PWRRDAEEMONIP:PWRDAEMONPORT -c my.fully.qualified.Classname -l./http_calls.lua
+    $ java -jar httploadgenerator.jar director --ip LOADGENIP --load myArrivalRates.csv -o myLog.csv -p PWRRDAEEMONIP:PWRDAEMONPORT -c my.fully.qualified.Classname --lua./http_calls.lua
 
 Example (with the power communicator compiled into a separate jar):
 
-    $ java -cp "MYJAR.jar;httploadgenerator.jar" tools.descartes.dlim.httploadgenerator.runner.Main -d -s LOADGENIP -a myArrivalRates.csv -o myLog.csv -p PWRRDAEEMONIP:PWRDAEMONPORT -c my.fully.qualified.Classname -l./http_calls.lua
+    $ java -cp "MYJAR.jar;httploadgenerator.jar" tools.descartes.dlim.httploadgenerator.runner.Main director --ip LOADGENIP --load myArrivalRates.csv -o myLog.csv -p PWRRDAEEMONIP:PWRDAEMONPORT -c my.fully.qualified.Classname --lua ./http_calls.lua
 
 ## 5. All Command Line Switches
 
-Use the _-h_ switch to show the following help page:
+Use the `-h` switch to show the help page:
 
-Usage:
 
-    $ java -jar httploadgenerator.jar [-d|-l|-h [optional params]]
+    Usage: java -jar httploadgenerator.jar COMMAND [<options>...]
+    HTTP load generator for varying load intensities.
+      -h, --help   Display this help message.
+    Commands:
+      director       Run in director mode.
+      loadgenerator  Run in director mode.
    
-Example:
+Run `java -jar httploadgenerator.jar director -h` for the director's help page:
 
-    $ java -jar httploadgenerator.jar -d -s 192.168.0.201 -a ./arrivalRates/test.txt -o myLog.csv -p 127.0.0.1:8888 -c tools.descartes.dlim.httploadgenerator.power.TMCTLDCommunicator -l./http_calls.lua
+    Run in director mode.
+    Usage: java -jar httploadgenerator.jar director [<options>...]
+    Runs the load generator in director mode. The director parses configuration
+    files, connects to one or multiple load generators, and writes the results to
+    the result csv file.
+      -a, --load, --arrivals, --loadintensity=ARRIVALRATEFILE
+                            Path of the (LIMBO-generated) arrival rate file.
+                              Default: arrivalrates.csv
+      -c, --class, --classname, --powerclass=POWERCLASS
+                            Fully qualified classname of the power communicator. Must be
+                              on the classpath.
+      -h, --help            Display this help message.
+      -l, --lua, --script=LUASCRIPT
+                            Path of the lua script that generates the call URLs.
+                              Default: http_calls.lua
+      -o, --log, --csv, --outfile=OUTFILE
+                            Name of output log relative to directory of arrival rate
+                              file.
+                              Default: default_log.txt
+      -p, --power, --poweraddress=POWERIP[:POWERPORT]
+                            Adress of powerDaemon. Multiple addresses are delimited with
+                              ",". No address => no power measurements.
+                              Default: []
+      -r, --seed, --random, --randomseed=SEED
+                            Integer seed for the random generator. Seed of 0 =>
+                              Equi-distant dispatch times.
+                              Default: 5
+      -s, --ip, --adress, --generator=IP
+                            Adress of load generator(s). Multiple addresses are
+                              delimited with ",".
+                              Default: [127.0.0.1]
+      -t, --threads, --threadcount=NUM_THREADS
+                            Number of threads used by the load generator. Increase this
+                              number in case of dropped transactions.
+                              Default: 128
+      -u, --timout=TIMOUT   Url connection timeout in ms. Timout of 0 => no timout.
+                              Default: 0
 
-Primary parameters (pick one):
+Additional Example:
 
-* "_-d_": 'd'irector mode. starts the director. Additional optional parameters are useful.
-* "_-l_": 'l'oad generator mode. Needs no additional parameters.
-* "_-h_": the 'h'elp page.
+    $ java -jar httploadgenerator.jar director -s 192.168.0.201 -a ./arrivalRates/test.txt -o myLog.csv -p 127.0.0.1:8888 -c tools.descartes.dlim.httploadgenerator.power.TMCTLDCommunicator -l ./http_calls.lua
 
-Secondary parameters for director (optional):
-Missing parameters may cause the director to prompt for the data.
-* "_-s [ip]_": Adre's's of load generator. Multiple addresses must be delimited with ",".
-* "_-p [ip[:port]]_": Adress of 'p'owerDaemon. No address => no power measurements.
-* "_-a [path]_": Path of LIMBO-generated 'a'rrival rate file.
-* "_-o [name]_": Name of 'o'utput log relative to directory of arrival rate file.
-* "_-r [seed]_": Integer seed for the 'r'andom generator. No seed => Equi-distant dispatch times.
-* "_-l [Lua script]_": Path of the 'l'ua script that generates the call URLs. No script => "http_calls.lua".
-* "_-t [thread count]_": Number of threads in load generator. No thread count => 128.
-* "_-u [url con timeout]_": 'U'rl connection timeout in ms. Default => no timout.
-* "_-c [class name]_": Fully qualified classname of the power communicator. Must be on the classpath.
+## 6. Results
+
+Results are written to the output CSV file. They contain the following metrics for each time interval:
+
+1. **Target Time**: The current time interval.
+1. **Load Intensity**: The target load intensity for the interval, as specified in the arrival rate file.
+1. **Successful Transactions**: The number of successful transactions that concluded in this time interval.
+1. **Failed Transactions**: Number of transaction that failed in this time interval. Failed transactions can have one of three causes (in descending order of likelyhood):
+  1. Timout: The transaction was interrupted by a timout, as specified using the `-u, --timout` command line switch.
+  1. Error Code: The transaction returned an HTTP error code. Error codes are logged if the logging level is set to FINEST.
+  1. Exception in the LUA script: Any exception in the load generator also causes a failed transaction. This can be caused if the LUA lua script expected a different response.
+1. **Dropped Transactions**: Number of dropped transactions. Dropped transactions are transactions that are never sent out. This is the case if a transaction would already have exceeded its timout time at the time it was started. Dropped transactions are usually an indicator of too few threads in the load generator or other bottlenecks in the load generation machine.
+1. **Avg Response Time**: Average response time of all transactions completed in this time interval. Note the response time only measures the time the transaction waited for a response by the server. It does not measure the queueing time at the load generator before being sent out.
+1. **Final Batch Time**: A control metric that logs the time when the las transaction of this time interval was queued up in the transaction queue.
