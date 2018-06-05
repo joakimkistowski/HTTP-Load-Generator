@@ -82,7 +82,9 @@ public class HTTPTransaction extends Transaction {
 		} catch (TimeoutException e) {
 			generator.revertLastCall();
 		} catch (ExecutionException e) {
-			LOG.log(Level.SEVERE, "ExecutionException in call for URL: " + url + "; Cause: " + e.getCause().toString());
+			if (e.getCause() == null || !(e.getCause() instanceof TimeoutException)) {
+				LOG.log(Level.SEVERE, "ExecutionException in call for URL: " + url + "; Cause: " + e.getCause().toString());
+			}
 			generator.revertLastCall();
 		} catch (CancellationException e) {
 			LOG.log(Level.SEVERE, "CancellationException: " + url + "; " + e.getMessage());

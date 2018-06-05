@@ -20,12 +20,17 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import picocli.CommandLine;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.ParameterException;
 import tools.descartes.dlim.httploadgenerator.generator.ArrivalRateTuple;
+import tools.descartes.dlim.httploadgenerator.runner.cli.DirectorCommand;
+import tools.descartes.dlim.httploadgenerator.runner.cli.LoadGeneratorCommand;
 
 /**
  * Main class is entry point of the application. Passed arguments are checked
@@ -34,11 +39,18 @@ import tools.descartes.dlim.httploadgenerator.generator.ArrivalRateTuple;
  * @author Joakim von Kistowski, Maximilian Deffner
  *
  */
-public class Main extends Thread {
+@Command(name = "httploadgenerator",
+	customSynopsis = "@|bold java -jar httploadgenerator.jar |@@|red COMMAND|@ [@|yellow <options>|@...]",
+	description = "HTTP load generator for varying load intensities.",
+	subcommands = { DirectorCommand.class, LoadGeneratorCommand.class })
+public class Main implements Runnable {
 
 	/** The constant logging instance. */
 	private static final Logger LOG = Logger.getLogger(Main.class.getName());
 
+	@Option(names = { "-h", "--help" }, usageHelp = true, description = "Display this help message.")
+	private boolean helpRequested = false;
+	
 	/**
 	 * Main method for splitting up passed arguments and starting corresponding
 	 * mode.
@@ -47,91 +59,39 @@ public class Main extends Thread {
 	 *            Passed arguments by calling the application.
 	 */
 	public static void main(String[] args) {
-		HashMap<String, String> params = new HashMap<String, String>();
-
-		String currentParam = "";
-		String currentKey = "";
-		for (int i = 0; i < args.length; i++) {
-			String word = args[i].trim();
-			if (word.startsWith("-")) {
-				addToMap(currentKey, currentParam, params);
-				currentKey = word.substring(0, 2).toLowerCase();
-				currentParam = "";
-				if (word.length() > 2) {
-					currentParam = word.substring(2);
-				}
-			} else {
-				currentParam += word;
-			}
+		CommandLine top = new CommandLine(new Main());
+		if (args.length == 0) {
+			top.usage(System.out);
 		}
-		addToMap(currentKey, currentParam, params);
-		if (params.get("-h") != null || args.length == 0) {
-			printHelp();
+		
+		List<CommandLine> parsedCommands;
+		try {
+		    parsedCommands = top.parse(args);
+		} catch (ParameterException ex) { // incorrect user input for one of the subcommands
+		    LOG.severe("Error parsing command line: " + ex.getMessage());
+		    ex.getCommandLine().usage(System.out); // get the offended subcommand from the exception
+		    return;
 		}
-
-		if (params.get("-d") != null) {
-			Director.executeDirector(params.get("-a"), params.get("-o"), params.get("-p"), params.get("-s"),
-					params.get("-r"), params.get("-t"), params.get("-u"), params.get("-l"), params.get("-c"));
-		} else if (params.get("-l") != null) {
-			AbstractLoadGenerator.executeLoadGenerator();
+		
+		for (CommandLine parsed : parsedCommands) {
+		    if (parsed.isUsageHelpRequested()) {
+		        parsed.usage(System.out);
+		        return;
+		    } else if (parsed.isVersionHelpRequested()) {
+		        parsed.printVersionHelp(System.out);
+		        return;
+		    }
+		}
+		Object last = parsedCommands.get(parsedCommands.size() - 1).getCommand();
+		if (last instanceof Runnable) {
+		    ((Runnable) last).run();
+		    return;
 		}
 	}
-
-	/**
-	 * Method for printing the help instructions to the console.
-	 */
-	private static void printHelp() {
-		System.out.println("Welcome to LIMBO HTTP Load Generator");
-		System.out.println("Usage:");
-		System.out.println("   java -jar httploadgenerator.jar [-d|-l|-h [optional params]]");
-		System.out.println("Example:");
-		System.out.println(
-				"   java -jar httploadgenerator.jar -d -s 192.168.0.201 "
-						+ "-a ./arrivalRates/test.csv -o myLog.csv -p 10.1.2.3:3300 "
-						+ "-c tools.descartes.dlim.httploadgenerator.power.HIOKICommunicator -l ./http_calls.lua");
-		System.out.println("");
-		System.out.println("Primary parameters (pick one):");
-		System.out.println("   \"-d\": \'d\'irector mode. starts the director.");
-		System.out.println("         Additional optional parameters are useful.");
-		System.out.println("   \"-l\": \'l\'oad generator mode. Needs no additional parameters.");
-		System.out.println("   \"-h\": this \'h\'elp page.");
-		System.out.println("");
-		System.out.println("Secondary parameters for director (optional):");
-		System.out.println("Missing parameters may cause the director to prompt for the data.");
-		System.out.println("   \"-s [ip]\": Adre\'s\'s of load generator(s).");
-		System.out.println("              Multiple addresses are delimited with \",\" (no whitespaces!).");
-		System.out.println("   \"-p [ip[:port]]\": Adress of \'p\'owerDaemon. Multiple addresses are");
-		System.out.println("                     delimited with \",\" (no whitespaces!).");
-		System.out.println("                     No address => no power measurements.");
-		System.out.println("   \"-a [path]\": Path of LIMBO-generated \'a\'rrival rate file.");
-		System.out.println("   \"-o [name]\": Name of \'o\'utput log relative to directory");
-		System.out.println("                of arrival rate file.");
-		System.out.println("   \"-r [seed]\": Integer seed for the \'r\'andom generator.");
-		System.out.println("                No seed => Equi-distant dispatch times.");
-		System.out.println("   \"-l [Lua script]\": Path of the \'l\'ua script that generates the call URLs.");
-		System.out.println("                      No script => \"http_calls.lua\".");
-		System.out.println("   \"-t [thread count]\": Number of threads in load generator.");
-		System.out.println("                        No thread count => 128.");
-		System.out.println("   \"-u [url con timeout]\": \'U\'rl connection timeout in ms. Default => no timout.");
-		System.out.println("   \"-c [class name]\": Fully qualified classname of the power communicator.");
-		System.out.println("                      Must be on the classpath.");
-	}
-
-	/**
-	 * Creating a hash map of the received arguments.
-	 * 
-	 * @param key
-	 *            Key starting with "-" like -d of received arguments of the
-	 *            main method.
-	 * @param params
-	 *            Received parameters of the arguments of the main method.
-	 * @param map
-	 *            Hash map in which the keys and parameters are stored.
-	 */
-	private static void addToMap(String key, String params, HashMap<String, String> map) {
-		if (!key.isEmpty()) {
-			map.put(key, params.trim());
-		}
+	
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
 	}
 
 	/**
@@ -196,5 +156,4 @@ public class Main extends Thread {
 		}
 		return timeStamps;
 	}
-
 }

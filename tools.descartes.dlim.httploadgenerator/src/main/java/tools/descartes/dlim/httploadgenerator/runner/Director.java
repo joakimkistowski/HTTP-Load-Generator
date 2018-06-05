@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
@@ -49,18 +48,17 @@ public class Director extends Thread {
 	 * Parameters may be null. Director asks the user for null parameters if they are required.
 	 * @param profilePath The path of the LIMBO-generated load profile.
 	 * @param outName The name of the output log file.
-	 * @param powerAddress The address of the power daemon (optional).
-	 * @param generator The address of the load generator(s).
+	 * @param powerAddresses The addresses of the power daemon (optional).
+	 * @param generators The addresses of the load generator(s).
 	 * @param randomSeed The random seed for exponentially distributed request arrivals.
 	 * @param threadCount The number of threads that generate load.
 	 * @param urlTimeout The url connection timeout.
 	 * @param scriptPath The path of the script file that generates the specific requests.
 	 * @param powerCommunicatorClassName Fully qualified class name of the power communicator class.
 	 */
-	public static void executeDirector(String profilePath, String outName, String powerAddress, String generator,
-			String randomSeed, String threadCount, String urlTimeout, String scriptPath,
+	public static void executeDirector(String profilePath, String outName, String[] powerAddresses, String[] generators,
+			int randomSeed, int threadCount, int urlTimeout, String scriptPath,
 			String powerCommunicatorClassName) {
-			Scanner scanner = new Scanner(System.in);
 			List<IPowerCommunicator> powerCommunicators = new LinkedList<>();
 			
 			//Load Profile
@@ -68,103 +66,50 @@ public class Director extends Thread {
 			if (profilePath != null) {
 				file = new File(profilePath);
 			} else {
-				System.out.print("Load Profile Path: ");
-				file = new File(scanner.nextLine());
-			}
-
-			//Logfile
-			if (outName == null) {
-				LOG.info("Using default log: " + IRunnerConstants.DEFAULT_LOG);
-				outName = IRunnerConstants.DEFAULT_LOG;
+				LOG.severe("No arrival rate profile specified.");
+				return;
 			}
 
 			//Power measurement
 			if (powerCommunicatorClassName != null && !powerCommunicatorClassName.trim().isEmpty()
-					&& powerAddress != null && !powerAddress.isEmpty()) {
-				initializePowerCommunicators(powerCommunicators, powerCommunicatorClassName, powerAddress);
+					&& powerAddresses != null && !(powerAddresses.length == 0)) {
+				initializePowerCommunicators(powerCommunicators, powerCommunicatorClassName, powerAddresses);
 			} else {
 				LOG.warning("No power measurements");
 			}
 
-			//Director Address
-			String generatorAddress;
-			if (generator != null) {
-				generatorAddress = generator.trim();
-			} else {
-				LOG.warning("No load generator address, using localhost.");
-				generatorAddress = IRunnerConstants.LOCALHOST_IP;
-			}
-
 			//Random Seed
 			boolean randomBatchTimes = true;
-			String seedStr = randomSeed;
-			if (seedStr == null) {
+			if (randomSeed <= 0) {
 				LOG.info("No Random Seed for Batch Generation specified. "
 						+ "This parameter is unneeded for request time stamp generation.");
 				randomBatchTimes = false;
 				LOG.info("Using equi-distant non-random inter batch times.");
-			} else {
-				try {
-					seed = Integer.parseInt(seedStr.trim());
-					System.out.println("Seed set to: " + seedStr.trim());
-				} catch (NumberFormatException e) {
-					randomBatchTimes = false;
-					LOG.warning("Invalid seed, using equi-distant non-random inter batch times.");
-				}
 			}
 			
-			//Thread Count
-			int threadNum = IRunnerConstants.DEFAULT_THREAD_NUM;
-			if (threadCount != null) {
-				try {
-					threadNum = Integer.parseInt(threadCount);
-					LOG.info("Load Generator Thread Count set to " + threadCount);
-				} catch (NumberFormatException e) {
-					LOG.warning("Invalid Thread Count: " + threadCount);
-				}
-			} else {
-				LOG.info("Using default load generation thread count: " + threadNum);
-			}
+			LOG.info("Load Generator Thread Count set to " + threadCount);
+			LOG.info("URL connection timout set to " + urlTimeout + " ms");
 			
-			//Thread Count
-			int timout = -1;
-			if (urlTimeout != null) {
-				try {
-					timout = Integer.parseInt(urlTimeout);
-					LOG.info("URL connection timout set to " + urlTimeout + " ms");
-				} catch (NumberFormatException e) {
-					LOG.warning("Invalid timout: " + urlTimeout);
-				}
-			} else {
-				LOG.info("No timout specified.");
-			}
 			
 			//Script Path
-			String scriptPathRead;
-			if (scriptPath != null) {
-				scriptPathRead = scriptPath.trim();
-			} else {
-				LOG.warning("No Lua script path provided. Using: " + IRunnerConstants.DEFAULT_LUA_PATH);
-				scriptPathRead = IRunnerConstants.DEFAULT_LUA_PATH;
-			}
+			String scriptPathRead = scriptPath.trim();
+			LOG.info("Using Lua Script: " + scriptPathRead);
 
 			if (file != null && outName != null && !outName.isEmpty()) {
-				Director director = new Director(generatorAddress.split(":")[0].trim());
+				Director director = new Director(generators);
 				director.process(file, outName, randomBatchTimes,
-						threadNum, timout, scriptPathRead, powerCommunicators);
+						threadCount, urlTimeout, scriptPathRead, powerCommunicators);
 			}
 			powerCommunicators.forEach(pc -> pc.stopCommunicator());
-			scanner.close();
 	}
 
 	/**
 	 * Inititializes a director with a load generator address.
 	 * @param loadGenerators Addresses of the load generator. Seperated by ",".
 	 */
-	public Director(String loadGenerators) {
-		String[] addresses = loadGenerators.split("[,;]");
-		communicators = new ArrayList<>(addresses.length);
-		for (String address : addresses) {
+	public Director(String[] loadGenerators) {
+		communicators = new ArrayList<>(loadGenerators.length);
+		for (String address : loadGenerators) {
 			String[] addressTokens = address.split(":");
 			String ip = addressTokens[0].trim();
 			if (!ip.isEmpty()) {
@@ -258,9 +203,8 @@ public class Director extends Thread {
 	}
 	
 	private static void initializePowerCommunicators(List<IPowerCommunicator> pcList,
-			String pcClassName, String addresses) {
-		String[] singleAddresses = addresses.trim().split("[,;]");
-		for (String address : singleAddresses) {
+			String pcClassName, String[] addresses) {
+		for (String address : addresses) {
 			if (!address.trim().isEmpty()) {
 				String[] host = address.split(":");
 				int port = 22444;
@@ -364,7 +308,7 @@ public class Director extends Thread {
 				+ "; #Dropped = " + droppedTransactions);
 		writer.print(targetTime + "," + loadIntensity + ","
 				+ successfulTransactions + "," + failedTransactions + ","
-				+ avgResponseTime + "," + droppedTransactions + "," + finalBatchTime);
+				+ droppedTransactions + "," + avgResponseTime + "," + finalBatchTime);
 		if (powers != null && !powers.isEmpty()) {
 			powers.stream().forEachOrdered(p -> writer.print("," + p));
 		}

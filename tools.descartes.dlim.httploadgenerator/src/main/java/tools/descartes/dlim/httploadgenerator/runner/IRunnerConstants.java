@@ -30,6 +30,10 @@ public interface IRunnerConstants {
 	 */
 	public static final int DEFAULT_PORT = 24226;
 	/**
+	 * Default arrival rate file path.
+	 */
+	public static final String DEFAULT_ARRIVAL_RATE_PATH = "arrivalrates.csv";
+	/**
 	 * Default output log name.
 	 */
 	public static final String DEFAULT_LOG = "default_log.txt";
