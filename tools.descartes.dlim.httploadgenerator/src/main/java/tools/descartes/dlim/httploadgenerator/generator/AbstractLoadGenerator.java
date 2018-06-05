@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package tools.descartes.dlim.httploadgenerator.runner;
+package tools.descartes.dlim.httploadgenerator.generator;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -24,6 +24,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import tools.descartes.dlim.httploadgenerator.runner.IRunnerConstants;
 
 /**
  * The class AbstractLoadGenerator is a abstract class for various load
@@ -205,8 +207,7 @@ public abstract class AbstractLoadGenerator extends Thread {
 		try {
 			director.close();
 		} catch (IOException e) {
-			LOG.log(Level.SEVERE, "Could not close connection.");
-			e.printStackTrace();
+			LOG.log(Level.SEVERE, "Could not close connection. Error: " + e.getMessage());
 		}
 	}
 
@@ -215,26 +216,30 @@ public abstract class AbstractLoadGenerator extends Thread {
 	 * random batch time transferred by the director.
 	 * 
 	 * @param params
-	 *            String array of the parameters transaction class name, seed
-	 *            and random batch time.
+	 *            String array of the parameters received via network.
+	 *            Expected message:
+	 *            "start,[randomseed(int)],[randombatchtimes(boolean)],[warmup-duration-s(int)],[warmup-load(double)]"
 	 */
 	private void startBenchmark(String[] params) {
 		LOG.log(Level.INFO, "Receiving Benchmark Parameters.");
 		// Read Params
 		boolean randomBatchTimes = Boolean.parseBoolean(params[1].trim());
 		int seed = Integer.parseInt(params[2].trim());
+		int warmupDurationS = Integer.parseInt(params[3]);
+		double warmupLoad = Double.parseDouble(params[4]);
 		ResultTracker.TRACKER.reset();
 		out.println(System.currentTimeMillis());
 
-		LOG.log(Level.INFO, "Starting run with randomBatchTimes=" + randomBatchTimes + ", seed=" + seed);
+		LOG.log(Level.INFO, "Starting run with randomBatchTimes=" + randomBatchTimes + ", seed=" + seed + "\n"
+				+ "warmupDuration=" + warmupDurationS + " s, warmupLoadIntensity=" + warmupLoad);
 		File script = new File(TMP_SCRIPT_PATH);
 		if (!script.exists()) {
 			error("Temporary load generator side script not found at " + TMP_SCRIPT_PATH);
 		}
-		process(randomBatchTimes, seed);
+		process(randomBatchTimes, seed, warmupDurationS, warmupLoad);
 		out.println(IRunnerConstants.DONE_KEY);
 	}
-
+	
 	/**
 	 * Sending error message to the director.
 	 * 
@@ -259,8 +264,15 @@ public abstract class AbstractLoadGenerator extends Thread {
 	 *            True, if wait times should be randomized a bit.
 	 * @param seed
 	 *            The random number generator seed.
+	 * @param warmupDurationS
+	 * 			  The duration of a potential warmup period in seconds.
+	 * 			  Warmup is skipped if the duration is 0.
+	 * @param warmupLoadIntensity
+	 * 			  The load intensity of the warmup period.
+	 * 			  Warmup runs a constant load intensity and is skipped if the load is < 1.
 	 */
-	protected abstract void process(boolean randomBatchTimes, int seed);
+	protected abstract void process(boolean randomBatchTimes, int seed,
+			int warmupDurationS, double warmupLoadIntensity);
 
 	/**
 	 * Sending results to the director after every interval.

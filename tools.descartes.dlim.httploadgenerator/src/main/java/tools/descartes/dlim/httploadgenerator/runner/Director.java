@@ -54,10 +54,14 @@ public class Director extends Thread {
 	 * @param threadCount The number of threads that generate load.
 	 * @param urlTimeout The url connection timeout.
 	 * @param scriptPath The path of the script file that generates the specific requests.
+	 * @param warmupDurationS The duration of a potential warmup period in seconds.
+	 * 		Warmup is skipped if the duration is 0.
+	 * @param warmupRate The load intensity of the warmup period.
+	 * 		Warmup runs a constant load intensity and is skipped if the load is < 1.
 	 * @param powerCommunicatorClassName Fully qualified class name of the power communicator class.
 	 */
 	public static void executeDirector(String profilePath, String outName, String[] powerAddresses, String[] generators,
-			int randomSeed, int threadCount, int urlTimeout, String scriptPath,
+			int randomSeed, int threadCount, int urlTimeout, String scriptPath, double warmupRate, int warmupDurationS,
 			String powerCommunicatorClassName) {
 			List<IPowerCommunicator> powerCommunicators = new LinkedList<>();
 			
@@ -98,7 +102,7 @@ public class Director extends Thread {
 			if (file != null && outName != null && !outName.isEmpty()) {
 				Director director = new Director(generators);
 				director.process(file, outName, randomBatchTimes,
-						threadCount, urlTimeout, scriptPathRead, powerCommunicators);
+						threadCount, urlTimeout, scriptPathRead, warmupDurationS, warmupRate, powerCommunicators);
 			}
 			powerCommunicators.forEach(pc -> pc.stopCommunicator());
 	}
@@ -135,10 +139,15 @@ public class Director extends Thread {
 	 * @param threadCount The number of threads that generate load.
 	 * @param timeout The connection timeout for the HTTP url connections.
 	 * @param scriptPath The path of the script file that generates the specific requests.
+	 * @param warmupDurationS The duration of a potential warmup period in seconds.
+	 * 		Warmup is skipped if the duration is 0.
+	 * @param warmupRate The load intensity of the warmup period.
+	 * 		Warmup runs a constant load intensity and is skipped if the load is < 1.
 	 * @param powerCommunicators Communicators for communicating with power daemon (optional).
 	 */
 	public void process(File file, String outName, boolean randomBatchTimes,
-			int threadCount, int timeout, String scriptPath, List<IPowerCommunicator> powerCommunicators) {
+			int threadCount, int timeout, String scriptPath,
+			int warmupDurationS, double warmupRate, List<IPowerCommunicator> powerCommunicators) {
 
 		try {
 			List<ArrivalRateTuple> arrRates = Main.readFileToList(file, 0);
@@ -178,7 +187,8 @@ public class Director extends Thread {
 				}
 			}
 			long timeZero = communicators.parallelStream()
-					.mapToLong(c -> c.startBenchmarking(randomBatchTimes, seed)).min().getAsLong();
+					.mapToLong(c -> c.startBenchmarking(randomBatchTimes, seed, warmupDurationS, warmupRate))
+					.min().getAsLong();
 			String dateString = sdf.format(new Date(timeZero));
 			System.out.println("Beginning Run @" + timeZero + "(" + dateString + ")");
 			writer.println("," + dateString);
@@ -306,13 +316,16 @@ public class Director extends Thread {
 				+ "; #Success = " + successfulTransactions
 				+ "; #Failed = " + failedTransactions
 				+ "; #Dropped = " + droppedTransactions);
-		writer.print(targetTime + "," + loadIntensity + ","
-				+ successfulTransactions + "," + failedTransactions + ","
-				+ droppedTransactions + "," + avgResponseTime + "," + finalBatchTime);
-		if (powers != null && !powers.isEmpty()) {
-			powers.stream().forEachOrdered(p -> writer.print("," + p));
+		//warmup has target times <= 0, ignore it
+		if (targetTime > 0) {
+			writer.print(targetTime + "," + loadIntensity + ","
+					+ successfulTransactions + "," + failedTransactions + ","
+					+ droppedTransactions + "," + avgResponseTime + "," + finalBatchTime);
+			if (powers != null && !powers.isEmpty()) {
+				powers.stream().forEachOrdered(p -> writer.print("," + p));
+			}
+			writer.println("");
 		}
-		writer.println("");
 	}
 
 }

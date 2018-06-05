@@ -46,6 +46,11 @@ public interface IRunnerConstants {
 	 */
 	public static final int DEFAULT_THREAD_NUM = 128;
 	
+	/**
+	 * The default warmup duration in seconds.
+	 */
+	public static final int DEFAULT_WARMUP_DURATION = 30;
+	
 	/** Socket information */
 	/**
 	 * Localhost IP.
@@ -90,7 +95,8 @@ public interface IRunnerConstants {
 	 */
 	public static final String RESULTS_KEY = "results";
 	/**
-	 * Signal for starting measurement.
+	 * Signal for starting measurement. Followed by comma-seperated parameters.
+	 * Expected: "start,[randomseed(int)],[randombatchtimes(boolean)],[warmup-duration-s(int)],[warmup-load(double)]"
 	 */
 	public static final String START_KEY = "start";
 	/**

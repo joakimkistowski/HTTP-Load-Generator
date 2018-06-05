@@ -24,11 +24,11 @@ import java.util.logging.Logger;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
 
-import tools.descartes.dlim.httploadgenerator.runner.TransactionQueueSingleton;
-import tools.descartes.dlim.httploadgenerator.runner.ResultTracker;
-import tools.descartes.dlim.httploadgenerator.runner.Transaction;
-import tools.descartes.dlim.httploadgenerator.runner.TransactionDroppedException;
-import tools.descartes.dlim.httploadgenerator.runner.TransactionInvalidException;
+import tools.descartes.dlim.httploadgenerator.generator.ResultTracker;
+import tools.descartes.dlim.httploadgenerator.transaction.Transaction;
+import tools.descartes.dlim.httploadgenerator.transaction.TransactionDroppedException;
+import tools.descartes.dlim.httploadgenerator.transaction.TransactionInvalidException;
+import tools.descartes.dlim.httploadgenerator.transaction.TransactionQueueSingleton;
 
 /**
  * HTTP transaction sends HTML requests to a HTTP web server based on a LUA script.

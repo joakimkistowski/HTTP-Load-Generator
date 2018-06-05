@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package tools.descartes.dlim.httploadgenerator.runner;
+package tools.descartes.dlim.httploadgenerator.transaction;
 
-import java.util.Random;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import tools.descartes.dlim.httploadgenerator.http.HTTPTransaction;
@@ -29,7 +28,6 @@ import tools.descartes.dlim.httploadgenerator.http.HTTPTransaction;
 public class TransactionBatch {
 
 	private int size;
-	private long meanWaitInterval;
 
 	/**
 	 * Create a new transaction batch.
@@ -45,7 +43,6 @@ public class TransactionBatch {
 	 */
 	public TransactionBatch(long targetTime, long currentTime, long meanWaitInterval, int targetArrivalRate) {
 		// calculate Batch Size
-		this.meanWaitInterval = meanWaitInterval;
 		if (targetTime - currentTime <= meanWaitInterval) {
 			size = targetArrivalRate;
 		} else {
@@ -80,25 +77,6 @@ public class TransactionBatch {
 	 */
 	public int getBatchSize() {
 		return size;
-	}
-
-	/**
-	 * Returns a waiting time to wait after batch dispatch.
-	 * @param r The random generator
-	 * @param randomize True if sleep times should be randomized.
-	 * @return The waiting time.
-	 */
-	public long getPostBatchSleepTime(Random r, boolean randomize) {
-		if (!randomize) {
-			return meanWaitInterval;
-		}
-
-		// Exponential Random Variable with meanWaitTime as mean
-		double randomWaitTime = (0.5 * meanWaitInterval) + (-Math.log(r.nextDouble())) * meanWaitInterval / 2.0;
-		// clamp
-		randomWaitTime = Math.max(0.5 * meanWaitInterval, randomWaitTime);
-		randomWaitTime = Math.min(1.5 * meanWaitInterval, randomWaitTime);
-		return (long) randomWaitTime;
 	}
 
 }

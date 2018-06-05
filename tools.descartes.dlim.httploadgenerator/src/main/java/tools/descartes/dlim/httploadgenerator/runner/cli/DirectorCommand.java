@@ -15,17 +15,17 @@ description = "Runs the load generator in director mode. The director parses con
 public class DirectorCommand implements Runnable {
 	
 	@Option(names = {"--arrivals", "--load", "--loadintensity", "-a"},
-			paramLabel = "ARRIVALRATEFILE",
+			paramLabel = "ARRIVALRATE_FILE",
 			description="Path of the (LIMBO-generated) @|yellow a|@rrival rate file.")
 	private String profilePath = IRunnerConstants.DEFAULT_ARRIVAL_RATE_PATH;
 	
-	@Option(names = {"--outfile", "--log", "--csv", "-o"},
-			paramLabel = "OUTFILE",
+	@Option(names = {"--outfile", "--out", "--log", "--csv", "-o"},
+			paramLabel = "OUT_FILE",
 			description="Name of @|yellow o|@utput log relative to directory of arrival rate file.")
 	private String outName = IRunnerConstants.DEFAULT_LOG;
 	
 	@Option(names = {"--power", "--poweraddress", "-p"},
-			paramLabel = "POWERIP[:POWERPORT]",
+			paramLabel = "POWER_IP[:POWER_PORT]",
 			description="Adress of @|yellow p|@owerDaemon. Multiple addresses are "
 					+ "delimited with \",\". No address => no power measurements.")
 	private String[] powerAddress = {};
@@ -46,8 +46,8 @@ public class DirectorCommand implements Runnable {
 					+ "Increase this number in case of dropped transactions.")
 	private int threadCount = IRunnerConstants.DEFAULT_THREAD_NUM;;
 	
-	@Option(names = {"--timout", "-u"},
-			paramLabel = "TIMOUT",
+	@Option(names = {"--timeout", "-u"},
+			paramLabel = "TIMEOUT",
 			description="@|yellow U|@rl connection timeout in ms. Timout of 0 => no timout.")
 	private int urlTimeout = 0;
 	
@@ -57,10 +57,20 @@ public class DirectorCommand implements Runnable {
 	private String scriptPath = IRunnerConstants.DEFAULT_LUA_PATH;
 	
 	@Option(names = {"--powerclass", "--classname", "--class", "-c"},
-			paramLabel = "POWERCLASS",
+			paramLabel = "POWER_CLASS",
 			description="Fully qualified @|yellow c|@lassname of the power communicator."
 					+ " Must be on the classpath.")
 	private String powerCommunicatorClassName;
+	
+	@Option(names = {"--warmup", "--warmuprate", "--warmup-rate", "--wr"},
+			paramLabel = "WARMUP_RATE",
+			description="Load intensity for @|yellow w|@armup period. Warmup is skipped if set to < 1.")
+	private double warmupRate = 0;
+	
+	@Option(names = {"--warmupduration", "--warmup-duration", "--wd"},
+			paramLabel = "WARMUP_DURATION",
+			description="Duration of the @|yellow w|@armup period in seconds. Warmup is skipped if set to 0.")
+	private int warmupDuration =  IRunnerConstants.DEFAULT_WARMUP_DURATION;
 	
 	@Option(names = { "-h", "--help" }, usageHelp = true, description = "Display this help message.")
 	private boolean helpRequested = false;
@@ -68,6 +78,6 @@ public class DirectorCommand implements Runnable {
 	@Override
 	public void run() {
 		Director.executeDirector(profilePath, outName, powerAddress, generator,
-				randomSeed, threadCount, urlTimeout, scriptPath, powerCommunicatorClassName);
+				randomSeed, threadCount, urlTimeout, scriptPath, warmupRate, warmupDuration, powerCommunicatorClassName);
 	}
 }

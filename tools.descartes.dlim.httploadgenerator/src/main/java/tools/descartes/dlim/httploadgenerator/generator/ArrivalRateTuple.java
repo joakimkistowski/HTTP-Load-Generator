@@ -26,9 +26,8 @@ import java.util.List;
  * 
  * @author Joakim von Kistowski
  */
-public class ArrivalRateTuple implements Comparable<ArrivalRateTuple> {
+public class ArrivalRateTuple {
 
-	private static boolean sortByTime = false;
 
 	private double timeStamp;
 	private double arrivalRate;
@@ -44,21 +43,6 @@ public class ArrivalRateTuple implements Comparable<ArrivalRateTuple> {
 	public ArrivalRateTuple(double timeStamp, double arrivalRate) {
 		this.timeStamp = timeStamp;
 		this.arrivalRate = arrivalRate;
-	}
-
-	/**
-	 * Get the time-difference between two arrival rate tuples. Returns
-	 * time-stamp/2 if null is passed.
-	 * 
-	 * @param t
-	 *            The other tuple (next tuple).
-	 * @return The step difference between the tuples.
-	 */
-	public double getStep(ArrivalRateTuple t) {
-		if (t == null) {
-			return timeStamp * 2;
-		}
-		return Math.abs(t.getTimeStamp() - timeStamp);
 	}
 
 	/**
@@ -94,55 +78,11 @@ public class ArrivalRateTuple implements Comparable<ArrivalRateTuple> {
 	}
 
 	/**
-	 * Checks if arrival rate tuples are sorted by time or arrival rate. This is
-	 * a static global setting!
-	 * 
-	 * @return True if sorted by time.
-	 */
-	public static boolean isSortByTime() {
-		return sortByTime;
-	}
-
-	/**
-	 * Set whether arrival rate tuples are to be sortet by time or arrival rate.
-	 * This is a static global setting!
-	 * 
-	 * @param sortByTime True if to sort by time.
-	 */
-	public static void setSortByTime(boolean sortByTime) {
-		ArrivalRateTuple.sortByTime = sortByTime;
-	}
-
-	/**
-	 * Compares two arrival rate tuples within one another. Uses either
-	 * time-stamp or arrival rate based on isSortByTime().
-	 * 
-	 * @see java.lang.Comparable#compareTo(java.lang.Object)
-	 */
-	@Override
-	public int compareTo(ArrivalRateTuple o) {
-		if (sortByTime) {
-			if (timeStamp < o.getTimeStamp()) {
-				return -1;
-			} else if (timeStamp > o.getTimeStamp()) {
-				return 1;
-			}
-		} else {
-			if (arrivalRate < o.getArrivalRate()) {
-				return -1;
-			} else if (arrivalRate > o.getArrivalRate()) {
-				return 1;
-			}
-		}
-		return 0;
-	}
-
-	/**
 	 * Returns a simple output String for the arrival rate tuple.
 	 * @return A string representation.
 	 */
 	public String toString() {
-		return timeStamp + "," + arrivalRate + ";";
+		return "(" + timeStamp + "," + arrivalRate + ")";
 	}
 
 	/**

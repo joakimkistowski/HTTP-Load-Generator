@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package tools.descartes.dlim.httploadgenerator.runner;
+package tools.descartes.dlim.httploadgenerator.generator;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -27,9 +27,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import tools.descartes.dlim.httploadgenerator.generator.ArrivalRateTuple;
 import tools.descartes.dlim.httploadgenerator.http.HTTPInputGeneratorPool;
 import tools.descartes.dlim.httploadgenerator.http.HTTPTransaction;
+import tools.descartes.dlim.httploadgenerator.runner.IRunnerConstants;
+import tools.descartes.dlim.httploadgenerator.transaction.TransactionBatch;
+import tools.descartes.dlim.httploadgenerator.transaction.TransactionQueueSingleton;
 
 /**
  * The class ArrivalRateTupleLoadGenerator is a child of the
@@ -96,7 +98,8 @@ public class ArrivalRateTupleLoadGenerator extends AbstractLoadGenerator {
 	 * {@inheritDoc}
 	 */
 	@Override
-	protected void process(boolean randomBatchTimes, int seed) {
+	protected void process(boolean randomBatchTimes, int seed,
+			int warmupDurationS, double warmupLoadIntensity) {
 		r.setSeed(seed);
 
 		try {
@@ -105,55 +108,50 @@ public class ArrivalRateTupleLoadGenerator extends AbstractLoadGenerator {
 			LinkedBlockingQueue<Runnable> executorQueue = new LinkedBlockingQueue<Runnable>();
 			executor = new ThreadPoolExecutor(numberOfThreads, numberOfThreads, 0, TimeUnit.MILLISECONDS,
 					executorQueue);
-			TransactionQueueSingleton.getInstance().preInitializeTransactions(HTTPTransaction.class, 400);
+			TransactionQueueSingleton.getInstance().resetAndpreInitializeTransactions(HTTPTransaction.class, 400);
 
 			/*
 			 * Mean wait time between batches of transactions is 10 ms or 1/10th
 			 * of the time between two arrival rate tuples.
 			 */
 			int defaultMeanWaitTime = Math.min(10, (int) (arrRates.get(0).getTimeStamp() * 1000) / 10);
-			long timeZero = System.currentTimeMillis();
+			
 			lastCompletedCount = 0;
+			
+			//Warmup, if not skipped
+			if (warmupDurationS > 0 && warmupLoadIntensity >= 1) {
+				long warmupStart = System.currentTimeMillis(); 
+				int arrivalRate = (int) warmupLoadIntensity;
+				for (long targetTime = 1000;
+						targetTime <= warmupDurationS * 1000;
+						targetTime += 1000) {
+					long currentTime = System.currentTimeMillis() - warmupStart;
+					
+					currentTime = blockingScheduleTransactionBatchesForInterval(arrivalRate,
+							warmupStart, currentTime, targetTime, defaultMeanWaitTime, randomBatchTimes);
+					//warmup has target times <= 0
+					sendBatchDataToDirector((targetTime / 1000) - warmupDurationS, arrivalRate, ((double) currentTime) / 1000);
+				}
+			}
+			
+			long timeZero = System.currentTimeMillis();
 			double nextTimeStamp = 0;
-
-			int targetArrivalsInInterval = 0;
 
 			for (ArrivalRateTuple t : arrRates) {
 				long currentTime = System.currentTimeMillis() - timeZero;
 
 				// set target arrival rate and next time target
-				targetArrivalsInInterval += (int) t.getArrivalRate();
+				int targetArrivalsInInterval = (int) t.getArrivalRate();
 				long targetTime = (long) (1000.0 * t.getTimeStamp());
 				
-				//Set mean wait time. Ensure it is not too short for very low loads.
-				long meanWaitTime = defaultMeanWaitTime;
-				if (targetArrivalsInInterval < 10 && targetArrivalsInInterval > 1) {
-					meanWaitTime = (targetTime - currentTime) / targetArrivalsInInterval; 
-				}
-
-				/*
-				 * Dispatches the work in small batches that are then
-				 * parallelized. Batch sizes are set so that the expected number
-				 * of batches is timeToNextArrivalRateTuple/meanWaitTime. Then
-				 * runs each batch and waits slightly randomized for the next
-				 * batch to start.
-				 */
-				while (targetArrivalsInInterval > 0) {
-
-					TransactionBatch batch = new TransactionBatch(targetTime, currentTime, meanWaitTime,
-							targetArrivalsInInterval);
-					batch.executeBatch(executor);
-					targetArrivalsInInterval -= batch.getBatchSize();
-
-					sleep(batch.getPostBatchSleepTime(r, randomBatchTimes));
-
-					currentTime = System.currentTimeMillis() - timeZero;
-				}
+				currentTime = blockingScheduleTransactionBatchesForInterval(targetArrivalsInInterval,
+						timeZero, currentTime, targetTime, defaultMeanWaitTime, randomBatchTimes);
 
 				sendBatchDataToDirector(t.getTimeStamp(), (int) t.getArrivalRate(), ((double) currentTime) / 1000);
 				nextTimeStamp = t.getTimeStamp() * 1000;
 			}
 
+			//wait for remaining transactions to trickle in
 			nextTimeStamp += 1000;
 
 			while (executor.getActiveCount() > 0) {
@@ -169,6 +167,7 @@ public class ArrivalRateTupleLoadGenerator extends AbstractLoadGenerator {
 			}
 			LOG.log(Level.INFO, "Workload finished, " + executor.getCompletedTaskCount() + " Tasks executed.");
 			LOG.log(Level.INFO, "Invalid Transactions: " + ResultTracker.TRACKER.getTotalInvalidTransactionCount());
+			LOG.log(Level.INFO, "Dropped Transactions: " + ResultTracker.TRACKER.getTotalDroppedTransactionCount());
 			executor.shutdown();
 
 		} catch (InterruptedException e) {
@@ -176,6 +175,93 @@ public class ArrivalRateTupleLoadGenerator extends AbstractLoadGenerator {
 		}
 	}
 
+	/**
+	 * Dispatches the work in small batches that are then
+	 * parallelized. Batch sizes are set so that the expected number
+	 * of batches is timeToNextArrivalRateTuple/meanWaitTime. Then
+	 * runs each batch and waits slightly randomized for the next
+	 * batch to start.
+	 * @param targetArrivalsInInterval The number of transactions to schedule before time target hits.
+	 * @param timeZero Time of experiment start.
+	 * @param currentTime The current time.
+	 * @param targetTime The target time at which the current load intensity target is to be met.
+	 * @param meanWaitTime The mean time to wait between batches.
+	 * @param randomBatchTimes Weather or not batch waiting times should be randomized.
+	 * @return The time of the last scheduled batch.
+	 * @throws InterruptedException If thread sleep does weird things.
+	 */
+	private long blockingScheduleTransactionBatchesForInterval(int targetArrivalsInInterval,
+			long timeZero, long currentTime, long targetTime, long meanWaitTime, boolean randomBatchTimes)
+					throws InterruptedException {
+		//Set mean wait time. Ensure it is not too short for very low loads.
+		long actualMeanWaitTime =
+				calculateMeanWaitTime(meanWaitTime, targetTime, currentTime, targetArrivalsInInterval);
+
+		while (targetArrivalsInInterval > 0) {
+			targetArrivalsInInterval -= scheduleBatch(targetTime, currentTime,
+					actualMeanWaitTime, targetArrivalsInInterval);
+			sleep(getPostBatchSleepTime(actualMeanWaitTime, r, randomBatchTimes));
+			currentTime = System.currentTimeMillis() - timeZero;
+		}
+		if (targetArrivalsInInterval > 0) {
+			throw new RuntimeException("Target arrivals left after scheduling. This should never happen.");
+		}
+		return currentTime;
+	}
+	
+	/**
+	 * Schedules a batch. Returns the number of placed transactions.
+	 * @param targetTime The target time at which the current load intensity target is to be met.
+	 * @param currentTime The current time.
+	 * @param meanWaitTime The mean time to wait between batches.
+	 * @param targetArrivalsInInterval The number of transactions to schedule before time target hits.
+	 * @return The number of scheduled transactions.
+	 */
+	private int scheduleBatch(long targetTime, long currentTime, long meanWaitTime,
+			int targetArrivalsInInterval) {
+		TransactionBatch batch = new TransactionBatch(targetTime, currentTime, meanWaitTime,
+				targetArrivalsInInterval);
+		batch.executeBatch(executor);
+		return batch.getBatchSize();
+	}
+	
+	/**
+	 * Calculates the mean wait time. Effectively uses default mean wait time and guards for some edge cases.
+	 * Ensures that it is not not too short for low loads.
+	 * @param defaultMeanWaitTime The mean time to wait between batches.
+	 * @param targetTime The target time at which the current load intensity target is to be met.
+	 * @param currentTime The current time.
+	 * @param targetArrivalsInInterval The number of transactions to schedule before time target hits.
+	 * @return The mean wait time to use for the current distribution.
+	 */
+	private long calculateMeanWaitTime(long defaultMeanWaitTime, long targetTime, long currentTime,
+			int targetArrivalsInInterval) {
+		long meanWaitTime = defaultMeanWaitTime;
+		if (targetArrivalsInInterval < 10 && targetArrivalsInInterval > 1) {
+			meanWaitTime = (targetTime - currentTime) / targetArrivalsInInterval; 
+		}
+		return meanWaitTime;
+	}
+	
+	/**
+	 * Returns a waiting time to wait after batch dispatch.
+	 * @param r The random generator
+	 * @param randomize True if sleep times should be randomized.
+	 * @return The waiting time.
+	 */
+	public long getPostBatchSleepTime(long meanWaitTime, Random r, boolean randomize) {
+		if (!randomize) {
+			return meanWaitTime;
+		}
+
+		// Exponential Random Variable with meanWaitTime as mean
+		double randomWaitTime = (0.5 * meanWaitTime) + (-Math.log(r.nextDouble())) * meanWaitTime / 2.0;
+		// clamp
+		randomWaitTime = Math.max(0.5 * meanWaitTime, randomWaitTime);
+		randomWaitTime = Math.min(1.5 * meanWaitTime, randomWaitTime);
+		return (long) randomWaitTime;
+	}
+	
 	/**
 	 * Sending results to the director after every interval.
 	 * 

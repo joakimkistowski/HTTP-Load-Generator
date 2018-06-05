@@ -133,10 +133,17 @@ public class LoadGeneratorCommunicator {
 	 * be polled by using {@link #getLatestResultMessageBlocking()}.
 	 * @param randomBatchTimes True if batch times are to be randomized.
 	 * @param seed The random seed for random batch times.
+	 * @param warmupDurationS
+	 * 			  The duration of a potential warmup period in seconds.
+	 * 			  Warmup is skipped if the duration is 0.
+	 * @param warmupLoad
+	 * 			  The load intensity of the warmup period.
+	 * 			  Warmup runs a constant load intensity and is skipped if the load is < 1.
 	 * @return The time of start.
 	 */
-	public long startBenchmarking(boolean randomBatchTimes, int seed) {
-		out.println("start," + randomBatchTimes + "," + seed);
+	public long startBenchmarking(boolean randomBatchTimes, int seed, int warmupDurationS, double warmupLoad) {
+		out.println(IRunnerConstants.START_KEY + "," + randomBatchTimes + "," + seed + ","
+				+ warmupDurationS + "," + warmupLoad);
 		long time = 0;
 		try {
 			time = Long.parseLong(in.readLine().trim());

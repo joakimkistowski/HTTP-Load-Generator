@@ -1,7 +1,7 @@
 package tools.descartes.dlim.httploadgenerator.runner.cli;
 
 import picocli.CommandLine.Command;
-import tools.descartes.dlim.httploadgenerator.runner.AbstractLoadGenerator;
+import tools.descartes.dlim.httploadgenerator.generator.AbstractLoadGenerator;
 
 @Command(name = "loadgenerator", 
 header = "Run in director mode.",

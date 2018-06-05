@@ -20,8 +20,8 @@ import java.util.logging.Logger;
 
 import tools.descartes.dlim.httploadgenerator.http.HTTPInputGenerator;
 import tools.descartes.dlim.httploadgenerator.http.HTTPTransaction;
-import tools.descartes.dlim.httploadgenerator.runner.TransactionDroppedException;
-import tools.descartes.dlim.httploadgenerator.runner.TransactionInvalidException;
+import tools.descartes.dlim.httploadgenerator.transaction.TransactionDroppedException;
+import tools.descartes.dlim.httploadgenerator.transaction.TransactionInvalidException;
 
 /**
  * Keeper for the LUA script to use from the UI.

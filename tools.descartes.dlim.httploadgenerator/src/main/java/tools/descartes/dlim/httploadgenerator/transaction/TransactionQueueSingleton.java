@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package tools.descartes.dlim.httploadgenerator.runner;
+package tools.descartes.dlim.httploadgenerator.transaction;
 
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
@@ -58,12 +58,13 @@ public final class TransactionQueueSingleton {
 	}
 
 	/**
-	 * Initializes a number of transactions. The pre-initialization is intended to reduce
+	 * Resets and initializes a number of transactions. The pre-initialization is intended to reduce
 	 * dispatching times during load generation.
 	 * @param transactionClass Class of the transaction to initialize. Must have a default Constructor.
 	 * @param numInitialTransactions Number of transactions to pre-initialize.
 	 */
-	public void preInitializeTransactions(Class<? extends Transaction> transactionClass, int numInitialTransactions) {
+	public void resetAndpreInitializeTransactions(Class<? extends Transaction> transactionClass, int numInitialTransactions) {
+		transactionQueue = new LinkedBlockingQueue<Transaction>();
 		for (int i = 0; i < numInitialTransactions; i++) {
 			try {
 				transactionQueue.add(transactionClass.newInstance());

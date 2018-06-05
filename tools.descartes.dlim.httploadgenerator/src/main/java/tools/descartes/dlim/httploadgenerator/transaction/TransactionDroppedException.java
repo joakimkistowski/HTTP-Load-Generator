@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package tools.descartes.dlim.httploadgenerator.runner;
+package tools.descartes.dlim.httploadgenerator.transaction;
 
 /**
- * Exception for invalid/failed transactions.
- * Differs from dropped transaction in that these transactions were actually executed but failed.
- * E.g. the received an error status code or timeout.
+ * Exception for dropped transactions.
+ * Differs from invalid/failed transaction in that transactions with this
+ * exeception where never executed. The most common cause is that they had been queued for so
+ * long that they have already passed the timout duration at start.
  * @author Joakim von Kistowksi
  *
  */
-public class TransactionInvalidException extends Exception {
+public class TransactionDroppedException extends Exception {
 
-	public TransactionInvalidException(String message) {
+	public TransactionDroppedException(String message) {
 		super(message);
 	}
 	
