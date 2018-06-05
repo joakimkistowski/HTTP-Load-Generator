@@ -16,9 +16,12 @@
 package tools.descartes.dlim.httpscripttester;
 
 import java.io.File;
+import java.util.logging.Logger;
 
 import tools.descartes.dlim.httploadgenerator.http.HTTPInputGenerator;
 import tools.descartes.dlim.httploadgenerator.http.HTTPTransaction;
+import tools.descartes.dlim.httploadgenerator.runner.TransactionDroppedException;
+import tools.descartes.dlim.httploadgenerator.runner.TransactionInvalidException;
 
 /**
  * Keeper for the LUA script to use from the UI.
@@ -27,6 +30,8 @@ import tools.descartes.dlim.httploadgenerator.http.HTTPTransaction;
  */
 public class ScriptKeeper {
 
+	private static final Logger LOG = Logger.getLogger(ScriptKeeper.class.getName());
+	
 	private String call = "";
 	private int callNum = 1;
 	
@@ -48,7 +53,13 @@ public class ScriptKeeper {
 	 * @return The index of the call (input value to the LUA script).
 	 */
 	public int execute() {
-		transaction.process(generator);
+		try {
+			transaction.process(generator);
+		} catch (TransactionDroppedException e) {
+			LOG.severe("Transaction Dropped, queuing time exceeded timeout of " + generator.getTimeout() + " ms.");
+		} catch (TransactionInvalidException e) {
+			LOG.severe("Transaction Invalid, response time exceeded timout of " + generator.getTimeout() + " ms.");
+		}
 		call = generator.getLastCall();
 		callNum = generator.getCurrentCallNum() - 1;
 		return callNum;

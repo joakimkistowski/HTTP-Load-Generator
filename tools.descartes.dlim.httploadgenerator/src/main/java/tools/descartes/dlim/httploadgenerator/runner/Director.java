@@ -218,7 +218,7 @@ public class Director extends Thread {
 			}
 			PrintWriter writer = new PrintWriter(parentPath + "/" + outName);
 			writer.print("Target Time,Load Intensity,Successful Transactions,"
-			 + "Failed Transactions,Avg Response Time,Final Batch Dispatch Time");
+			 + "Failed Transactions,Dropped Transactions,Avg Response Time,Final Batch Dispatch Time");
 			powerCommunicators.stream().forEachOrdered(pc -> writer.print(",Watts(" + pc.getCommunicatorName() + ")"));
 			
 			LOG.info("Starting Load Generation");
@@ -364,7 +364,7 @@ public class Director extends Thread {
 				+ "; #Dropped = " + droppedTransactions);
 		writer.print(targetTime + "," + loadIntensity + ","
 				+ successfulTransactions + "," + failedTransactions + ","
-				+ avgResponseTime + "," + finalBatchTime);
+				+ avgResponseTime + "," + droppedTransactions + "," + finalBatchTime);
 		if (powers != null && !powers.isEmpty()) {
 			powers.stream().forEachOrdered(p -> writer.print("," + p));
 		}
