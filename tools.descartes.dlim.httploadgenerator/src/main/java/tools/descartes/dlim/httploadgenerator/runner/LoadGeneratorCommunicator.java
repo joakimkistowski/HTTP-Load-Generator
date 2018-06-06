@@ -128,7 +128,7 @@ public class LoadGeneratorCommunicator {
 
 	/**
 	 * Tells the load drivers to start benchmarking.
-	 * Returns the start time and then returns.
+	 * Returns the start time as reported by the load driver and then returns.
 	 * The benchmark itself runs asynchronously and results can
 	 * be polled by using {@link #getLatestResultMessageBlocking()}.
 	 * @param randomBatchTimes True if batch times are to be randomized.

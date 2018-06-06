@@ -19,6 +19,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * A container class containing an arrival rate and its time-stamp. Also offers
@@ -29,6 +30,8 @@ import java.util.List;
 public class ArrivalRateTuple {
 
 
+	private static final Logger LOG = Logger.getLogger(ArrivalRateTuple.class.getName());
+	
 	private double timeStamp;
 	private double arrivalRate;
 
@@ -120,6 +123,9 @@ public class ArrivalRateTuple {
 					timeStamp = timeStamp - offset;
 					if (timeStamp > 0) {
 						arrRates.add(new ArrivalRateTuple(timeStamp, readArrivalRate));
+					} else {
+						LOG.warning("Parsed non-positive timestamp with value\"" + timeStamp
+								+ "\". The load generator supports positive time stamps only.");
 					}
 				} catch (NumberFormatException e) {
 

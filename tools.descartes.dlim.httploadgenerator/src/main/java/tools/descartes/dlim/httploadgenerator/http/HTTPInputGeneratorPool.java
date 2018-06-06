@@ -97,4 +97,8 @@ public final class HTTPInputGeneratorPool {
 		return generator;
 	}
 	
+	public static enum PoolMode {
+		QUEUE, RANDOM
+	}
+	
 }

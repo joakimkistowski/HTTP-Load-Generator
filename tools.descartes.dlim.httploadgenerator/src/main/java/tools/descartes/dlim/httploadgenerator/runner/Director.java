@@ -190,17 +190,24 @@ public class Director extends Thread {
 					executor.execute(pc);
 				}
 			}
-			long timeZero = communicators.parallelStream()
+			communicators.parallelStream()
 					.mapToLong(c -> c.startBenchmarking(randomBatchTimes, seed,
 							warmupDurationS, warmupRate, warmupPauseS))
 					.min().getAsLong();
-			String dateString = sdf.format(new Date(timeZero));
-			System.out.println("Beginning Run @" + timeZero + "(" + dateString + ")");
-			writer.println("," + dateString);
+			long timeZero = System.currentTimeMillis();
+			System.out.println("Beginning Run @" + timeZero + "(" + sdf.format(new Date(timeZero)) + ")");
 
 			//get Data from LoadGenerator
-			while (!collectResultRound(powerCommunicators, writer)) {
-				/* collectResultRound blocking waits. We don't need to wait here. */
+			IntervalResult result;
+			while (!(result = collectResultRound()).isMeasurementConcluded()) {
+				//Check if a result for time 0 is sent. This result is only sent if warmup occured.
+				if (result.getTargetTime() == 0.0) {
+					timeZero = System.currentTimeMillis();
+					String dateString = sdf.format(new Date(timeZero));
+					System.out.println("Starting Measurement @" + timeZero + "(" + dateString + ")");
+					writer.println("," + dateString);
+				}
+				logState(result, powerCommunicators, writer);
 			}
 			System.out.println("Workload finished.");
 			writer.close();
@@ -253,14 +260,16 @@ public class Director extends Thread {
 	}
 	
 	/**
-	 * Collects one iteration of the results, aggregates them and logs them.
-	 * Returns false if more results are expected in the future.
-	 * Returns true if the measurements have concluded and the "done" signal was received from all communicators.
-	 * @return True, if the measurement has concluded.
+	 * Collects one iteration of the results, aggregates them and returns them.
+	 * {@link IntervalResult#isMeasurementConcluded()} is false if more results are expected in the future.
+	 * Such a container contains valid measurements results for the current interval.<br/>
+	 * {@link IntervalResult#isMeasurementConcluded()} is true if the measurements have concluded and the
+	 * "done" signal was received from all communicators. No valid results in this container.
+	 * @return The interval's result.
 	 */
-	private boolean collectResultRound(List<IPowerCommunicator> powerCommunicator, PrintWriter writer) {
+	private IntervalResult collectResultRound() {
 		int finishedCommunicators = 0;
-		double targetTime = 0;
+		double targetTime = Double.NEGATIVE_INFINITY;
 		int loadIntensity = 0;
 		int successfulTransactions = 0;
 		int failedTransactions = 0;
@@ -271,19 +280,19 @@ public class Director extends Thread {
 			if (communicator.isFinished()) {
 				finishedCommunicators++;
 				if (finishedCommunicators == communicators.size()) {
-					return true;
+					return IntervalResult.createIntervalResultWithMeasurementConcludedFlag();
 				}
 			} else {
 				String receivedResults = communicator.getLatestResultMessageBlocking();
 				if (receivedResults == null) {
 					finishedCommunicators++;
 					if (finishedCommunicators == communicators.size()) {
-						return true;
+						return IntervalResult.createIntervalResultWithMeasurementConcludedFlag();
 					}
 				} else {
 					String[] tokens = receivedResults.split(",");
 					double receivedTargetTime = Double.parseDouble(tokens[0].trim());
-					if (targetTime == 0) {
+					if (targetTime == Double.NEGATIVE_INFINITY) {
 						targetTime = receivedTargetTime;
 					} else {
 						if (targetTime != receivedTargetTime) {
@@ -301,13 +310,11 @@ public class Director extends Thread {
 		}
 		double avgResponseTime = responseTimes.stream().mapToDouble(d -> d.doubleValue()).average().getAsDouble();
 		double finalBatchTime = finalBatchTimes.stream().mapToDouble(d -> d.doubleValue()).max().getAsDouble();
-		logState(targetTime, loadIntensity, successfulTransactions, failedTransactions, droppedTransactions,
-				avgResponseTime, finalBatchTime, powerCommunicator, writer);
-		return false;
+		return new IntervalResult(targetTime, loadIntensity, successfulTransactions, failedTransactions,
+				droppedTransactions, avgResponseTime, finalBatchTime);
 	}
 
-	private void logState(double targetTime, int loadIntensity, int successfulTransactions, int failedTransactions,
-			int droppedTransactions, double avgResponseTime, double finalBatchTime, List<IPowerCommunicator> powerCommunicators,
+	private void logState(IntervalResult result, List<IPowerCommunicator> powerCommunicators,
 			PrintWriter writer) {
 		//get Power
 		List<Double> powers = null;
@@ -317,16 +324,17 @@ public class Director extends Thread {
 				powers.add(pc.getPowerMeasurement());
 			}
 		}
-		System.out.println("Target Time = " + targetTime
-				+ "; Load Intensity = " + loadIntensity
-				+ "; #Success = " + successfulTransactions
-				+ "; #Failed = " + failedTransactions
-				+ "; #Dropped = " + droppedTransactions);
+		System.out.println("Target Time = " + result.getTargetTime()
+				+ "; Load Intensity = " + result.getLoadIntensity()
+				+ "; #Success = " + result.getSuccessfulTransactions()
+				+ "; #Failed = " + result.getFailedTransactions()
+				+ "; #Dropped = " + result.getDroppedTransactions());
 		//warmup has target times <= 0, ignore it
-		if (targetTime > 0) {
-			writer.print(targetTime + "," + loadIntensity + ","
-					+ successfulTransactions + "," + failedTransactions + ","
-					+ droppedTransactions + "," + avgResponseTime + "," + finalBatchTime);
+		if (result.getTargetTime() > 0) {
+			writer.print(result.getTargetTime() + "," + result.getLoadIntensity() + ","
+					+ result.getSuccessfulTransactions() + "," + result.getFailedTransactions() + ","
+					+ result.getDroppedTransactions() + "," + result.getAvgResponseTime() + ","
+					+ result.getFinalBatchTime());
 			if (powers != null && !powers.isEmpty()) {
 				powers.stream().forEachOrdered(p -> writer.print("," + p));
 			}
