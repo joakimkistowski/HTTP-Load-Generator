@@ -139,11 +139,13 @@ public class LoadGeneratorCommunicator {
 	 * @param warmupLoad
 	 * 			  The load intensity of the warmup period.
 	 * 			  Warmup runs a constant load intensity and is skipped if the load is < 1.
+	 * @param warmupPauseS
+	 * 			  The pause after warmup before starting measurement in seconds.
 	 * @return The time of start.
 	 */
-	public long startBenchmarking(boolean randomBatchTimes, int seed, int warmupDurationS, double warmupLoad) {
+	public long startBenchmarking(boolean randomBatchTimes, int seed, int warmupDurationS, double warmupLoad, int warmupPauseS) {
 		out.println(IRunnerConstants.START_KEY + "," + randomBatchTimes + "," + seed + ","
-				+ warmupDurationS + "," + warmupLoad);
+				+ warmupDurationS + "," + warmupLoad + "," + warmupPauseS);
 		long time = 0;
 		try {
 			time = Long.parseLong(in.readLine().trim());

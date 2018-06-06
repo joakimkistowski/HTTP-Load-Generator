@@ -227,16 +227,18 @@ public abstract class AbstractLoadGenerator extends Thread {
 		int seed = Integer.parseInt(params[2].trim());
 		int warmupDurationS = Integer.parseInt(params[3]);
 		double warmupLoad = Double.parseDouble(params[4]);
+		int warmupPauseS = Integer.parseInt(params[5]);
 		ResultTracker.TRACKER.reset();
 		out.println(System.currentTimeMillis());
 
 		LOG.log(Level.INFO, "Starting run with randomBatchTimes=" + randomBatchTimes + ", seed=" + seed + "\n"
-				+ "warmupDuration=" + warmupDurationS + " s, warmupLoadIntensity=" + warmupLoad);
+				+ "warmupDuration=" + warmupDurationS + " s, warmupLoadIntensity=" + warmupLoad
+				+ ", warmupPause=" + warmupPauseS + " s");
 		File script = new File(TMP_SCRIPT_PATH);
 		if (!script.exists()) {
 			error("Temporary load generator side script not found at " + TMP_SCRIPT_PATH);
 		}
-		process(randomBatchTimes, seed, warmupDurationS, warmupLoad);
+		process(randomBatchTimes, seed, warmupDurationS, warmupLoad, warmupPauseS);
 		out.println(IRunnerConstants.DONE_KEY);
 	}
 	
@@ -270,9 +272,11 @@ public abstract class AbstractLoadGenerator extends Thread {
 	 * @param warmupLoadIntensity
 	 * 			  The load intensity of the warmup period.
 	 * 			  Warmup runs a constant load intensity and is skipped if the load is < 1.
+	 * @param warmupPauseS
+	 * 			  The pause after warmup before starting measurement in seconds.
 	 */
 	protected abstract void process(boolean randomBatchTimes, int seed,
-			int warmupDurationS, double warmupLoadIntensity);
+			int warmupDurationS, double warmupLoadIntensity, int warmupPauseS);
 
 	/**
 	 * Sending results to the director after every interval.

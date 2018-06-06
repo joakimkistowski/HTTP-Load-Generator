@@ -99,7 +99,7 @@ public class ArrivalRateTupleLoadGenerator extends AbstractLoadGenerator {
 	 */
 	@Override
 	protected void process(boolean randomBatchTimes, int seed,
-			int warmupDurationS, double warmupLoadIntensity) {
+			int warmupDurationS, double warmupLoadIntensity, int warmupPauseS) {
 		r.setSeed(seed);
 
 		try {
@@ -130,7 +130,20 @@ public class ArrivalRateTupleLoadGenerator extends AbstractLoadGenerator {
 					currentTime = blockingScheduleTransactionBatchesForInterval(arrivalRate,
 							warmupStart, currentTime, targetTime, defaultMeanWaitTime, randomBatchTimes);
 					//warmup has target times <= 0
-					sendBatchDataToDirector((targetTime / 1000) - warmupDurationS, arrivalRate, ((double) currentTime) / 1000);
+					sendBatchDataToDirector((targetTime / 1000) - warmupDurationS - warmupPauseS,
+							arrivalRate, ((double) currentTime) / 1000);
+				}
+				
+				//pause after warmup
+				long pauseStartTime = System.currentTimeMillis();
+				for (long targetTime = 1000;
+						targetTime <= warmupPauseS * 1000;
+						targetTime += 1000) {
+					long currentTime = System.currentTimeMillis();
+					Thread.sleep(pauseStartTime + targetTime - currentTime);
+					sendBatchDataToDirector((targetTime / 1000) - warmupPauseS, 0,
+							//no final dispatch time, since nothing is dispatched
+							0.0);
 				}
 			}
 			

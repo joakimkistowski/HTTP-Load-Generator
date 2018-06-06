@@ -50,6 +50,10 @@ public interface IRunnerConstants {
 	 * The default warmup duration in seconds.
 	 */
 	public static final int DEFAULT_WARMUP_DURATION = 30;
+	/**
+	 * The default pause to wait after warmup before starting measurement (in seconds).
+	 */
+	public static final int DEFAULT_WARMUP_PAUSE = 5;
 	
 	/** Socket information */
 	/**
@@ -96,7 +100,8 @@ public interface IRunnerConstants {
 	public static final String RESULTS_KEY = "results";
 	/**
 	 * Signal for starting measurement. Followed by comma-seperated parameters.
-	 * Expected: "start,[randomseed(int)],[randombatchtimes(boolean)],[warmup-duration-s(int)],[warmup-load(double)]"
+	 * Expected: "start,[randomseed(int)],[randombatchtimes(boolean)],[warmup-duration-s(int)],
+	 * [warmup-load(double)],[warmup-pause-s(int)]"
 	 */
 	public static final String START_KEY = "start";
 	/**

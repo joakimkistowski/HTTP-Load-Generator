@@ -64,13 +64,19 @@ public class DirectorCommand implements Runnable {
 	
 	@Option(names = {"--warmup", "--warmuprate", "--warmup-rate", "--wr"},
 			paramLabel = "WARMUP_RATE",
-			description="Load intensity for @|yellow w|@armup period. Warmup is skipped if set to < 1.")
+			description="Load intensity for warmup period. Warmup is skipped if set to < 1.")
 	private double warmupRate = 0;
 	
 	@Option(names = {"--warmupduration", "--warmup-duration", "--wd"},
 			paramLabel = "WARMUP_DURATION",
-			description="Duration of the @|yellow w|@armup period in seconds. Warmup is skipped if set to 0.")
+			description="Duration of the warmup period in seconds. Warmup is skipped if set to 0.")
 	private int warmupDuration =  IRunnerConstants.DEFAULT_WARMUP_DURATION;
+	
+	@Option(names = {"--warmupause", "--warmup-pause", "--wp"},
+			paramLabel = "WARMUP_PAUSE",
+			description="Duration of the pause after conclusion of the warmup period in seconds."
+					+ " Ignored if warmup is skipped.")
+	private int warmupPause =  IRunnerConstants.DEFAULT_WARMUP_PAUSE;
 	
 	@Option(names = { "-h", "--help" }, usageHelp = true, description = "Display this help message.")
 	private boolean helpRequested = false;
@@ -78,6 +84,7 @@ public class DirectorCommand implements Runnable {
 	@Override
 	public void run() {
 		Director.executeDirector(profilePath, outName, powerAddress, generator,
-				randomSeed, threadCount, urlTimeout, scriptPath, warmupRate, warmupDuration, powerCommunicatorClassName);
+				randomSeed, threadCount, urlTimeout, scriptPath, warmupRate, warmupDuration, warmupPause,
+				powerCommunicatorClassName);
 	}
 }

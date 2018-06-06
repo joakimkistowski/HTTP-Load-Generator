@@ -58,11 +58,12 @@ public class Director extends Thread {
 	 * 		Warmup is skipped if the duration is 0.
 	 * @param warmupRate The load intensity of the warmup period.
 	 * 		Warmup runs a constant load intensity and is skipped if the load is < 1.
+	 * @param warmupPauseS The pause after warmup before starting measurement in seconds.
 	 * @param powerCommunicatorClassName Fully qualified class name of the power communicator class.
 	 */
 	public static void executeDirector(String profilePath, String outName, String[] powerAddresses, String[] generators,
 			int randomSeed, int threadCount, int urlTimeout, String scriptPath, double warmupRate, int warmupDurationS,
-			String powerCommunicatorClassName) {
+			int warmupPauseS, String powerCommunicatorClassName) {
 			List<IPowerCommunicator> powerCommunicators = new LinkedList<>();
 			
 			//Load Profile
@@ -102,7 +103,8 @@ public class Director extends Thread {
 			if (file != null && outName != null && !outName.isEmpty()) {
 				Director director = new Director(generators);
 				director.process(file, outName, randomBatchTimes,
-						threadCount, urlTimeout, scriptPathRead, warmupDurationS, warmupRate, powerCommunicators);
+						threadCount, urlTimeout, scriptPathRead,
+						warmupDurationS, warmupRate, warmupPauseS, powerCommunicators);
 			}
 			powerCommunicators.forEach(pc -> pc.stopCommunicator());
 	}
@@ -143,11 +145,13 @@ public class Director extends Thread {
 	 * 		Warmup is skipped if the duration is 0.
 	 * @param warmupRate The load intensity of the warmup period.
 	 * 		Warmup runs a constant load intensity and is skipped if the load is < 1.
+	 * @param warmupPauseS The pause after warmup before starting measurement in seconds.
 	 * @param powerCommunicators Communicators for communicating with power daemon (optional).
 	 */
 	public void process(File file, String outName, boolean randomBatchTimes,
 			int threadCount, int timeout, String scriptPath,
-			int warmupDurationS, double warmupRate, List<IPowerCommunicator> powerCommunicators) {
+			int warmupDurationS, double warmupRate, int warmupPauseS,
+			List<IPowerCommunicator> powerCommunicators) {
 
 		try {
 			List<ArrivalRateTuple> arrRates = Main.readFileToList(file, 0);
@@ -187,7 +191,8 @@ public class Director extends Thread {
 				}
 			}
 			long timeZero = communicators.parallelStream()
-					.mapToLong(c -> c.startBenchmarking(randomBatchTimes, seed, warmupDurationS, warmupRate))
+					.mapToLong(c -> c.startBenchmarking(randomBatchTimes, seed,
+							warmupDurationS, warmupRate, warmupPauseS))
 					.min().getAsLong();
 			String dateString = sdf.format(new Date(timeZero));
 			System.out.println("Beginning Run @" + timeZero + "(" + dateString + ")");
@@ -207,8 +212,9 @@ public class Director extends Thread {
 
 
 		} catch (IOException e) {
-			LOG.severe("File not found.");
-			e.printStackTrace();
+			LOG.severe("File not found: " + e.getMessage()  + "\n\t"
+					+ "Did you specify the location of all files? "
+					+ "Consult \"java -jar ... director --help\" for the necessary command line switches.");
 		}
 	}
 	
