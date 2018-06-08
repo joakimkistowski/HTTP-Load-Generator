@@ -132,38 +132,57 @@ Run `java -jar httploadgenerator.jar director -h` for the director's help page:
     Runs the load generator in director mode. The director parses configuration
     files, connects to one or multiple load generators, and writes the results to
     the result csv file.
-      -a, --load, --arrivals, --loadintensity=ARRIVALRATEFILE
-                            Path of the (LIMBO-generated) arrival rate file.
-                              Default: arrivalrates.csv
-      -c, --class, --classname, --powerclass=POWERCLASS
-                            Fully qualified classname of the power communicator. Must be
-                              on the classpath.
-      -h, --help            Display this help message.
+          --randomize-users   With this setting, threads will not pick users (HTTP input
+                                generators, LUA script contexts) in order. Instead, each
+                                request will pick a random user. This setting can
+                                compensate for burstiness, caused by the fixed order of
+                                LUA calls. It is highly recommended to configure long
+                                warmup times when randomizing users.
+          --wd, --warmupduration, --warmup-duration=WARMUP_DURATION
+                              Duration of the warmup period in seconds. Warmup is
+                                skipped if set to 0.
+                                Default: 30
+          --wp, --warmupause, --warmup-pause=WARMUP_PAUSE
+                              Duration of the pause after conclusion of the warmup
+                                period in seconds. Ignored if warmup is skipped.
+                                Default: 5
+          --wr, --warmup, --warmuprate, --warmup-rate=WARMUP_RATE
+                              Load intensity for warmup period. Warmup is skipped if set
+                                to < 1.
+                                Default: 0.0
+      -a, --load, --arrivals, --loadintensity=ARRIVALRATE_FILE
+                              Path of the (LIMBO-generated) arrival rate file.
+                                Default: arrivalrates.csv
+      -c, --class, --classname, --powerclass=POWER_CLASS
+                              Fully qualified classname of the power communicator. Must
+                                be on the classpath.
+      -h, --help              Display this help message.
       -l, --lua, --script=LUASCRIPT
-                            Path of the lua script that generates the call URLs.
-                              Default: http_calls.lua
-      -o, --log, --csv, --outfile=OUTFILE
-                            Name of output log relative to directory of arrival rate
-                              file.
-                              Default: default_log.txt
-      -p, --power, --poweraddress=POWERIP[:POWERPORT]
-                            Adress of powerDaemon. Multiple addresses are delimited with
-                              ",". No address => no power measurements.
-                              Default: []
+                              Path of the lua script that generates the call URLs.
+                                Default: http_calls.lua
+      -o, --out, --log, --csv, --outfile=OUT_FILE
+                              Name of output log relative to directory of arrival rate
+                                file.
+                                Default: default_log.txt
+      -p, --power, --poweraddress=POWER_IP[:POWER_PORT]
+                              Adress of powerDaemon. Multiple addresses are delimited
+                                with ",". No address => no power measurements.
+                                Default: []
       -r, --seed, --random, --randomseed=SEED
-                            Integer seed for the random generator. Seed of 0 =>
-                              Equi-distant dispatch times.
-                              Default: 5
+                              Integer seed for the random generator. Seed of 0 =>
+                                Equi-distant dispatch times.
+                                Default: 5
       -s, --ip, --adress, --generator=IP
-                            Adress of load generator(s). Multiple addresses are
-                              delimited with ",".
-                              Default: [127.0.0.1]
+                              Adress of load generator(s). Multiple addresses are
+                                delimited with ",".
+                                Default: [127.0.0.1]
       -t, --threads, --threadcount=NUM_THREADS
-                            Number of threads used by the load generator. Increase this
-                              number in case of dropped transactions.
-                              Default: 128
-      -u, --timout=TIMOUT   Url connection timeout in ms. Timout of 0 => no timout.
-                              Default: 0
+                              Number of threads used by the load generator. Increase
+                                this number in case of dropped transactions.
+                                Default: 128
+      -u, --timeout=TIMEOUT   Url connection timeout in ms. Timout of 0 => no timout.
+                                Default: 0
+    
 
 Additional Example:
 
