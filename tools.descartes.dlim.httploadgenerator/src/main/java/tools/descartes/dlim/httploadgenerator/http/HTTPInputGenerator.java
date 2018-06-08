@@ -47,6 +47,8 @@ public class HTTPInputGenerator {
 
 	private final HttpClient httpClient;
 	
+	private int id;
+	
 	private int currentCallNum = 0;
 	private String lastInput = "";
 	private int timeout = 0;
@@ -59,11 +61,13 @@ public class HTTPInputGenerator {
 	 * onCall(callnum) must return the HTTP request for a specific call with number callnum.
 	 * callnum begins at 1 (Lua convention) and increments for each call. It resets back to 1
 	 * if onCall returns nil.
+	 * @param id The input generator's id.
 	 * @param scriptFile The url generator script.
 	 * @param randomSeed Seed for Lua random function.
 	 * @param timeout The http read timeout.
 	 */
-	public HTTPInputGenerator(File scriptFile, int randomSeed, int timeout) {
+	public HTTPInputGenerator(int id, File scriptFile, int randomSeed, int timeout) {
+		this.id = id;
 		httpClient = new HttpClient();
 		
 		if (timeout > 0) {
@@ -186,6 +190,38 @@ public class HTTPInputGenerator {
 	 */
 	public int getTimeout() {
 		return timeout;
+	}
+
+	int getId() {
+		return id;
+	}
+
+	/**
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + id;
+		return result;
+	}
+
+	/**
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		HTTPInputGenerator other = (HTTPInputGenerator) obj;
+		if (id != other.id)
+			return false;
+		return true;
 	}
 
 }

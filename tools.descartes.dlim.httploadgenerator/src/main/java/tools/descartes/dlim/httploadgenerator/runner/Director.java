@@ -59,10 +59,13 @@ public class Director extends Thread {
 	 * @param warmupRate The load intensity of the warmup period.
 	 * 		Warmup runs a constant load intensity and is skipped if the load is < 1.
 	 * @param warmupPauseS The pause after warmup before starting measurement in seconds.
+	 * @param randomizeUsers True if users should be randoized.
+	 * 		False if they should be taken from a queue in order.
 	 * @param powerCommunicatorClassName Fully qualified class name of the power communicator class.
 	 */
-	public static void executeDirector(String profilePath, String outName, String[] powerAddresses, String[] generators,
-			int randomSeed, int threadCount, int urlTimeout, String scriptPath, double warmupRate, int warmupDurationS,
+	public static void executeDirector(String profilePath, String outName, String[] powerAddresses,
+			String[] generators, int randomSeed, int threadCount, int urlTimeout, String scriptPath,
+			boolean randomizeUsers, double warmupRate, int warmupDurationS,
 			int warmupPauseS, String powerCommunicatorClassName) {
 			List<IPowerCommunicator> powerCommunicators = new LinkedList<>();
 			
@@ -104,7 +107,8 @@ public class Director extends Thread {
 				Director director = new Director(generators);
 				director.process(file, outName, randomBatchTimes,
 						threadCount, urlTimeout, scriptPathRead,
-						warmupDurationS, warmupRate, warmupPauseS, powerCommunicators);
+						warmupDurationS, warmupRate, warmupPauseS, randomizeUsers,
+						powerCommunicators);
 			}
 			powerCommunicators.forEach(pc -> pc.stopCommunicator());
 	}
@@ -146,11 +150,14 @@ public class Director extends Thread {
 	 * @param warmupRate The load intensity of the warmup period.
 	 * 		Warmup runs a constant load intensity and is skipped if the load is < 1.
 	 * @param warmupPauseS The pause after warmup before starting measurement in seconds.
+	 * @param randomizeUsers True if users should be randoized.
+	 * 		False if they should be taken from a queue in order.
 	 * @param powerCommunicators Communicators for communicating with power daemon (optional).
 	 */
 	public void process(File file, String outName, boolean randomBatchTimes,
 			int threadCount, int timeout, String scriptPath,
 			int warmupDurationS, double warmupRate, int warmupPauseS,
+			boolean randomizeUsers,
 			List<IPowerCommunicator> powerCommunicators) {
 
 		try {
@@ -192,7 +199,7 @@ public class Director extends Thread {
 			}
 			communicators.parallelStream()
 					.mapToLong(c -> c.startBenchmarking(randomBatchTimes, seed,
-							warmupDurationS, warmupRate, warmupPauseS))
+							warmupDurationS, warmupRate, warmupPauseS, randomizeUsers))
 					.min().getAsLong();
 			long timeZero = System.currentTimeMillis();
 			System.out.println("Beginning Run @" + timeZero + "(" + sdf.format(new Date(timeZero)) + ")");

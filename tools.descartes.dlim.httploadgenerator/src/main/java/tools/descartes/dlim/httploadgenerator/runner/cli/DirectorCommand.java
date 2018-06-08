@@ -98,13 +98,20 @@ public class DirectorCommand implements Runnable {
 					+ " Ignored if warmup is skipped.")
 	private int warmupPause =  IRunnerConstants.DEFAULT_WARMUP_PAUSE;
 	
+	@Option(names = {"--randomize-users"},
+			description="With this flag, threads will not pick users (HTTP input generators, LUA script contexts) in order."
+					+ " Instead, each request will pick a random user."
+					+ " This setting can compensate for burstiness, caused by the fixed order of LUA calls."
+					+ " It is highly recommended to configure long warmup times when randomizing users.")
+	private boolean randomizeUsers =  false;
+	
 	@Option(names = { "-h", "--help" }, usageHelp = true, description = "Display this help message.")
 	private boolean helpRequested = false;
 
 	@Override
 	public void run() {
 		Director.executeDirector(profilePath, outName, powerAddress, generator,
-				randomSeed, threadCount, urlTimeout, scriptPath, warmupRate, warmupDuration, warmupPause,
-				powerCommunicatorClassName);
+				randomSeed, threadCount, urlTimeout, scriptPath, randomizeUsers, warmupRate, warmupDuration,
+				warmupPause, powerCommunicatorClassName);
 	}
 }

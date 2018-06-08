@@ -141,11 +141,14 @@ public class LoadGeneratorCommunicator {
 	 * 			  Warmup runs a constant load intensity and is skipped if the load is < 1.
 	 * @param warmupPauseS
 	 * 			  The pause after warmup before starting measurement in seconds.
+	 * @param randomizeUsers True if users should be randoized.
+	 * 		False if they should be taken from a queue in order.
 	 * @return The time of start.
 	 */
-	public long startBenchmarking(boolean randomBatchTimes, int seed, int warmupDurationS, double warmupLoad, int warmupPauseS) {
+	public long startBenchmarking(boolean randomBatchTimes, int seed, int warmupDurationS,
+			double warmupLoad, int warmupPauseS, boolean randomizeUsers) {
 		out.println(IRunnerConstants.START_KEY + "," + randomBatchTimes + "," + seed + ","
-				+ warmupDurationS + "," + warmupLoad + "," + warmupPauseS);
+				+ warmupDurationS + "," + warmupLoad + "," + warmupPauseS + "," + randomizeUsers);
 		long time = 0;
 		try {
 			time = Long.parseLong(in.readLine().trim());
