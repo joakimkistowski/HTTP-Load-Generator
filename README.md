@@ -132,7 +132,7 @@ Run `java -jar httploadgenerator.jar director -h` for the director's help page:
     Runs the load generator in director mode. The director parses configuration
     files, connects to one or multiple load generators, and writes the results to
     the result csv file.
-          --randomize-users   With this setting, threads will not pick users (HTTP input
+          --randomize-users   With this flag, threads will not pick users (HTTP input
                                 generators, LUA script contexts) in order. Instead, each
                                 request will pick a random user. This setting can
                                 compensate for burstiness, caused by the fixed order of
