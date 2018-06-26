@@ -1,6 +1,6 @@
 # HTTP Load Generator
 
-Download the binary [here](https://se3.informatik.uni-wuerzburg.de/httploadgenerator/tools.descartes.dlim.httploadgenerator/target/httploadgenerator.jar).
+Download the binary [here](https://se3.informatik.uni-wuerzburg.de/httploadgenerator/tools.descartes.dlim.httploadgenerator/target/httploadgenerator.jar). Also, please consider [citing us](7-cite-us).
 
 The HTTP Load Generator is a load generator designed to generate HTTP loads with varying load intensities. It uses load intensity specifications as specified by [LIMBO](http://descartes.tools/limbo) to generate loads that vary in intensity (number of requests per second) over time. The load generator logs application level data and supports connecting to external power measurement daemons. It specifies the http requests themselves using LUA scripts, which are read at run-time.
 
@@ -202,3 +202,16 @@ Results are written to the output CSV file. They contain the following metrics f
 1. **Dropped Transactions**: Number of dropped transactions. Dropped transactions are transactions that are never sent out. This is the case if a transaction would already have exceeded its timout time at the time it was started. Dropped transactions are usually an indicator of too few threads in the load generator or other bottlenecks in the load generation machine.
 1. **Avg Response Time**: Average response time of all transactions completed in this time interval. Note the response time only measures the time the transaction waited for a response by the server. It does not measure the queueing time at the load generator before being sent out.
 1. **Final Batch Time**: A control metric that logs the time when the las transaction of this time interval was queued up in the transaction queue.
+
+## 7. Cite Us
+
+Please condider citing us if you use the HTTP Load Generator in your work:
+
+    @inproceedings{KiDeKo2018-ICAC-PowerPrediction,
+      author = {J{\'o}akim von Kistowski and Maximilian Deffner and Samuel Kounev},
+      booktitle = {Proceedings of the 15th IEEE International Conference on Autonomic Computing (ICAC 2018)},
+      location = {Trento, Italy},
+      month = {September},
+      title = {{Run-time Prediction of Power Consumption for Component Deployments}},
+      year = {2018},
+    }
