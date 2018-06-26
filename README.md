@@ -1,6 +1,6 @@
 # HTTP Load Generator
 
-Download the binary [here](https://se3.informatik.uni-wuerzburg.de/httploadgenerator/tools.descartes.dlim.httploadgenerator/target/httploadgenerator.jar). Also, please consider [citing us](7-cite-us).
+Download the binary [here](https://se3.informatik.uni-wuerzburg.de/httploadgenerator/tools.descartes.dlim.httploadgenerator/target/httploadgenerator.jar). Also, please consider [citing us](#7-cite-us).
 
 The HTTP Load Generator is a load generator designed to generate HTTP loads with varying load intensities. It uses load intensity specifications as specified by [LIMBO](http://descartes.tools/limbo) to generate loads that vary in intensity (number of requests per second) over time. The load generator logs application level data and supports connecting to external power measurement daemons. It specifies the http requests themselves using LUA scripts, which are read at run-time.
 
