@@ -12,6 +12,8 @@ Structure of this README:
 3. [Creating Custom Request Profies](#3-creating-custom-request-profies)
 4. [Using Power Daemons](#4-using-power-daemons)
 5. [All Command Line Switches](#5-all-command-line-switches)
+6. [Results](#6-results)
+7. [Cite Us](#7-cite-us)
 
 ## 1. Features and Application Scenarios
 
