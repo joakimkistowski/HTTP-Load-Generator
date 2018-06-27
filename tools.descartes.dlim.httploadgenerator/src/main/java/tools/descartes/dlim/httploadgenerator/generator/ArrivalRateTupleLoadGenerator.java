@@ -122,6 +122,8 @@ public class ArrivalRateTupleLoadGenerator extends AbstractLoadGenerator {
 			
 			lastCompletedCount = 0;
 			
+			clearResultTracker();
+			
 			//Warmup, if not skipped
 			if (warmupDurationS > 0 && warmupLoadIntensity >= 1) {
 				long warmupStart = System.currentTimeMillis(); 
@@ -151,6 +153,7 @@ public class ArrivalRateTupleLoadGenerator extends AbstractLoadGenerator {
 				}
 			}
 			
+			clearResultTracker();
 			long timeZero = System.currentTimeMillis();
 			double nextTimeStamp = 0;
 
@@ -295,6 +298,15 @@ public class ArrivalRateTupleLoadGenerator extends AbstractLoadGenerator {
 				(currentCompletedCount - lastCompletedCount - invalidTransactionCount - droppedTransactionCount),
 				avgResponseTime, invalidTransactionCount, droppedTransactionCount, actualtime);
 		lastCompletedCount = currentCompletedCount;
+	}
+	
+	/**
+	 * Clear the result tracker. Use at beginning of the measurement phase.
+	 */
+	private void clearResultTracker() {
+		long invalidTransactionCount = ResultTracker.TRACKER.getAndResetInvalidTransactionCount();
+		long droppedTransactionCount = ResultTracker.TRACKER.getAndResetDroppedTransactionCount();
+		double avgResponseTime = ResultTracker.TRACKER.getAverageResponseTimeInS();
 	}
 
 	@Override
