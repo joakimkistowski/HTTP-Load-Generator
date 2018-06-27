@@ -202,8 +202,13 @@ public class Director extends Thread {
 							warmupDurationS, warmupRate, warmupPauseS, randomizeUsers))
 					.min().getAsLong();
 			long timeZero = System.currentTimeMillis();
-			System.out.println("Beginning Run @" + timeZero + "(" + sdf.format(new Date(timeZero)) + ")");
-
+			String timeZeroString = sdf.format(new Date(timeZero));
+			System.out.println("Beginning Run @" + timeZero + "(" + timeZeroString + ")");
+			//print time zero if no warmup was set
+			if (warmupRate < 1 || warmupDurationS <= 0) {
+				writer.println("," + timeZeroString);
+			}
+			
 			//get Data from LoadGenerator
 			IntervalResult result;
 			while (!(result = collectResultRound()).isMeasurementConcluded()) {
@@ -211,6 +216,7 @@ public class Director extends Thread {
 				if (result.getTargetTime() == 0.0) {
 					timeZero = System.currentTimeMillis();
 					String dateString = sdf.format(new Date(timeZero));
+					//print time zero after conclusion of warmup
 					System.out.println("Starting Measurement @" + timeZero + "(" + dateString + ")");
 					writer.println("," + dateString);
 				}
