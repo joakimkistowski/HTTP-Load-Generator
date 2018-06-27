@@ -304,9 +304,9 @@ public class ArrivalRateTupleLoadGenerator extends AbstractLoadGenerator {
 	 * Clear the result tracker. Use at beginning of the measurement phase.
 	 */
 	private void clearResultTracker() {
-		long invalidTransactionCount = ResultTracker.TRACKER.getAndResetInvalidTransactionCount();
-		long droppedTransactionCount = ResultTracker.TRACKER.getAndResetDroppedTransactionCount();
-		double avgResponseTime = ResultTracker.TRACKER.getAverageResponseTimeInS();
+		ResultTracker.TRACKER.getAndResetInvalidTransactionCount();
+		ResultTracker.TRACKER.getAndResetDroppedTransactionCount();
+		ResultTracker.TRACKER.getAverageResponseTimeInS();
 	}
 
 	@Override
