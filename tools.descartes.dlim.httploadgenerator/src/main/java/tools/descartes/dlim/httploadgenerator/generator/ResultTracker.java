@@ -17,6 +17,8 @@ package tools.descartes.dlim.httploadgenerator.generator;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 
 /**
@@ -34,10 +36,14 @@ public final class ResultTracker {
 	 */
 	public static final ResultTracker TRACKER = new ResultTracker();
 	
-	private long invalidTransactionsPerMeasurementInterval = 0;
-	private long invalidTransactionsTotal = 0;
-	private long droppedTransactionsPerMeasurementInterval = 0;
-	private long droppedTransactionsTotal = 0;
+	private ReentrantLock invalidTransactionLock = new ReentrantLock();
+	private ReentrantLock droppedTransactionLock = new ReentrantLock();
+	private ReentrantLock responseTimeLock = new ReentrantLock();
+	
+	private AtomicLong invalidTransactionsPerMeasurementInterval = new AtomicLong(0);
+	private AtomicLong invalidTransactionsTotal = new AtomicLong(0);
+	private AtomicLong droppedTransactionsPerMeasurementInterval = new AtomicLong(0);
+	private AtomicLong droppedTransactionsTotal = new AtomicLong(0);
 	
 	private BlockingQueue<Long> responseTimeQueue = new LinkedBlockingQueue<>();
 	
@@ -48,64 +54,107 @@ public final class ResultTracker {
 	/**
 	 * Resets the validity tracker.
 	 */
-	public synchronized void reset() {
-		invalidTransactionsPerMeasurementInterval = 0;
-		invalidTransactionsTotal = 0;
-		droppedTransactionsPerMeasurementInterval = 0;
-		droppedTransactionsTotal = 0;
-		responseTimeQueue.clear();
+	public void reset() {
+		invalidTransactionLock.lock();
+		try {
+			invalidTransactionsPerMeasurementInterval.set(0);
+			invalidTransactionsTotal.set(0);
+		} finally {
+			invalidTransactionLock.unlock();
+		}
+		
+		droppedTransactionLock.lock();
+		try {
+			droppedTransactionsPerMeasurementInterval.set(0);
+			droppedTransactionsTotal.set(0);
+		} finally {
+			droppedTransactionLock.unlock();
+		}
+		
+		responseTimeLock.lock();
+		try {
+			responseTimeQueue.clear();
+		} finally {
+			responseTimeLock.unlock();
+		}
 	}
 	
 	/**
 	 * Adds an invalid transaction to the counter.
 	 */
-	public synchronized void incrementInvalidTransactionCount() {
-		invalidTransactionsPerMeasurementInterval++;
-		invalidTransactionsTotal++;
+	public void incrementInvalidTransactionCount() {
+		invalidTransactionLock.lock();
+		try {
+			invalidTransactionsPerMeasurementInterval.incrementAndGet();
+			invalidTransactionsTotal.incrementAndGet();
+		} finally {
+			invalidTransactionLock.unlock();
+		}
 	}
 	
 	/**
 	 * Adds an dropped transaction to the counter.
 	 */
-	public synchronized void incrementDroppedTransactionCount() {
-		droppedTransactionsPerMeasurementInterval++;
-		droppedTransactionsTotal++;
+	public void incrementDroppedTransactionCount() {
+		droppedTransactionLock.lock();
+		try {
+			droppedTransactionsPerMeasurementInterval.incrementAndGet();
+			droppedTransactionsTotal.incrementAndGet();
+		} finally {
+			droppedTransactionLock.unlock();
+		}
 	}
 	
 	/**
 	 * Returns the current invalid transaction count and resets the counter.
 	 * @return The current invalid transaction count.
 	 */
-	public synchronized long getAndResetInvalidTransactionCount() {
-		long tmpCount = invalidTransactionsPerMeasurementInterval;
-		invalidTransactionsPerMeasurementInterval = 0;
-		return tmpCount;
+	public long getAndResetInvalidTransactionCount() {
+		invalidTransactionLock.lock();
+		try {
+			return invalidTransactionsPerMeasurementInterval.getAndSet(0);
+		} finally {
+			invalidTransactionLock.unlock();
+		}
 	}
 	
 	/**
 	 * Returns the current dropped transaction count and resets the counter.
 	 * @return The current dropped transaction count.
 	 */
-	public synchronized long getAndResetDroppedTransactionCount() {
-		long tmpCount = droppedTransactionsPerMeasurementInterval;
-		droppedTransactionsPerMeasurementInterval = 0;
-		return tmpCount;
+	public long getAndResetDroppedTransactionCount() {
+		droppedTransactionLock.lock();
+		try {
+			return droppedTransactionsPerMeasurementInterval.getAndSet(0);
+		} finally {
+			droppedTransactionLock.unlock();
+		}
 	}
 	
 	/**
 	 * Returns the total invalid transaction counter since initialization or the last call of {@link #reset()}.
 	 * @return The total invalid transaction counter.
 	 */
-	public synchronized long getTotalInvalidTransactionCount() {
-		return invalidTransactionsTotal;
+	public long getTotalInvalidTransactionCount() {
+		invalidTransactionLock.lock();
+		try {
+			return invalidTransactionsTotal.get();
+		} finally {
+			invalidTransactionLock.unlock();
+		}
 	}
 	
 	/**
 	 * Returns the total dropped transaction counter since initialization or the last call of {@link #reset()}.
 	 * @return The total dropped transaction counter.
 	 */
-	public synchronized long getTotalDroppedTransactionCount() {
-		return droppedTransactionsTotal;
+	public long getTotalDroppedTransactionCount() {
+		droppedTransactionLock.lock();
+		try {
+			return droppedTransactionsTotal.get();
+		} finally {
+			droppedTransactionLock.unlock();
+		}
 	}
 	
 	/**
@@ -113,10 +162,13 @@ public final class ResultTracker {
 	 * @param responseTimeMs The resonse time in ms.
 	 */
 	public void logResponseTime(long responseTimeMs) {
+		responseTimeLock.lock();
 		try {
-			responseTimeQueue.put(responseTimeMs);
-		} catch (InterruptedException e) {
+			responseTimeQueue.add(responseTimeMs);
+		} catch (IllegalStateException e) {
 			LOG.severe("Error logging response time: " + e.getMessage());
+		} finally {
+			responseTimeLock.unlock();
 		}
 	}
 	
@@ -126,16 +178,21 @@ public final class ResultTracker {
 	 * @return The average response time in seconds.
 	 */
 	public double getAverageResponseTimeInS() {
-		 Long timems;
-		 int count = 0;
-		 double timeSumInS = 0.0;
-		 while ((timems = responseTimeQueue.poll()) != null) {
-			 count++;
-			 timeSumInS += (double) timems / 1000.0;
-		 }
-		 if (count == 0) {
-			 return 0.0;
-		 }
-		 return timeSumInS / count;
+		responseTimeLock.lock();
+		try {
+			 Long timems;
+			 int count = 0;
+			 double timeSumInS = 0.0;
+			 while ((timems = responseTimeQueue.poll()) != null) {
+				 count++;
+				 timeSumInS += ((double) timems) / 1000.0;
+			 }
+			 if (count == 0) {
+				 return 0.0;
+			 }
+			 return timeSumInS / count;
+		} finally {
+			responseTimeLock.unlock();
+		}
 	}
 }
