@@ -15,11 +15,8 @@
  */
 package tools.descartes.dlim.httploadgenerator.generator;
 
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Logger;
 
 /**
  * Offers tracking of results, such as response times and
@@ -28,8 +25,6 @@ import java.util.logging.Logger;
  *
  */
 public final class ResultTracker {
-
-	private static final Logger LOG = Logger.getLogger(ResultTracker.class.getName());
 	
 	/**
 	 * The tracker singleton.
@@ -45,7 +40,8 @@ public final class ResultTracker {
 	private AtomicLong droppedTransactionsPerMeasurementInterval = new AtomicLong(0);
 	private AtomicLong droppedTransactionsTotal = new AtomicLong(0);
 	
-	private BlockingQueue<Long> responseTimeQueue = new LinkedBlockingQueue<>();
+	private AtomicLong responseTimeSum = new AtomicLong(0);
+	private AtomicLong responseTimeLogCount = new AtomicLong(0);
 	
 	private ResultTracker() {
 		
@@ -73,7 +69,8 @@ public final class ResultTracker {
 		
 		responseTimeLock.lock();
 		try {
-			responseTimeQueue.clear();
+			responseTimeSum.set(0);
+			responseTimeLogCount.set(0);
 		} finally {
 			responseTimeLock.unlock();
 		}
@@ -110,12 +107,14 @@ public final class ResultTracker {
 	 * @return The current invalid transaction count.
 	 */
 	public long getAndResetInvalidTransactionCount() {
+		long invTrans;
 		invalidTransactionLock.lock();
 		try {
-			return invalidTransactionsPerMeasurementInterval.getAndSet(0);
+			invTrans = invalidTransactionsPerMeasurementInterval.getAndSet(0);
 		} finally {
 			invalidTransactionLock.unlock();
 		}
+		return invTrans;
 	}
 	
 	/**
@@ -123,12 +122,14 @@ public final class ResultTracker {
 	 * @return The current dropped transaction count.
 	 */
 	public long getAndResetDroppedTransactionCount() {
+		long dropTrans;
 		droppedTransactionLock.lock();
 		try {
-			return droppedTransactionsPerMeasurementInterval.getAndSet(0);
+			dropTrans = droppedTransactionsPerMeasurementInterval.getAndSet(0);
 		} finally {
 			droppedTransactionLock.unlock();
 		}
+		return dropTrans;
 	}
 	
 	/**
@@ -136,12 +137,14 @@ public final class ResultTracker {
 	 * @return The total invalid transaction counter.
 	 */
 	public long getTotalInvalidTransactionCount() {
+		long invTrans;
 		invalidTransactionLock.lock();
 		try {
-			return invalidTransactionsTotal.get();
+			invTrans = invalidTransactionsTotal.get();
 		} finally {
 			invalidTransactionLock.unlock();
 		}
+		return invTrans;
 	}
 	
 	/**
@@ -149,12 +152,14 @@ public final class ResultTracker {
 	 * @return The total dropped transaction counter.
 	 */
 	public long getTotalDroppedTransactionCount() {
+		long dropTrans;
 		droppedTransactionLock.lock();
 		try {
-			return droppedTransactionsTotal.get();
+			dropTrans = droppedTransactionsTotal.get();
 		} finally {
 			droppedTransactionLock.unlock();
 		}
+		return dropTrans;
 	}
 	
 	/**
@@ -164,9 +169,8 @@ public final class ResultTracker {
 	public void logResponseTime(long responseTimeMs) {
 		responseTimeLock.lock();
 		try {
-			responseTimeQueue.add(responseTimeMs);
-		} catch (IllegalStateException e) {
-			LOG.severe("Error logging response time: " + e.getMessage());
+			responseTimeSum.addAndGet(responseTimeMs);
+			responseTimeLogCount.incrementAndGet();
 		} finally {
 			responseTimeLock.unlock();
 		}
@@ -178,21 +182,17 @@ public final class ResultTracker {
 	 * @return The average response time in seconds.
 	 */
 	public double getAverageResponseTimeInS() {
+		long avgResponseTimeMs;
 		responseTimeLock.lock();
 		try {
-			 Long timems;
-			 int count = 0;
-			 double timeSumInS = 0.0;
-			 while ((timems = responseTimeQueue.poll()) != null) {
-				 count++;
-				 timeSumInS += ((double) timems) / 1000.0;
-			 }
-			 if (count == 0) {
-				 return 0.0;
-			 }
-			 return timeSumInS / count;
+			if (responseTimeSum.get() == 0) {
+				avgResponseTimeMs = 0;
+			} else {
+				avgResponseTimeMs = responseTimeSum.getAndSet(0) / responseTimeSum.getAndSet(0);
+			}
 		} finally {
 			responseTimeLock.unlock();
 		}
+		return ((double) avgResponseTimeMs) / 1000.0;
 	}
 }
