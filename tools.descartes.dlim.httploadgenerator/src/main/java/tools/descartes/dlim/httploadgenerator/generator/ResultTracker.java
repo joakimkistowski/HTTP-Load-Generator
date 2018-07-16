@@ -185,10 +185,10 @@ public final class ResultTracker {
 		long avgResponseTimeMs;
 		responseTimeLock.lock();
 		try {
-			if (responseTimeSum.get() == 0) {
+			if (responseTimeLogCount.get() == 0) {
 				avgResponseTimeMs = 0;
 			} else {
-				avgResponseTimeMs = responseTimeSum.getAndSet(0) / responseTimeSum.getAndSet(0);
+				avgResponseTimeMs = responseTimeSum.getAndSet(0) / responseTimeLogCount.getAndSet(0);
 			}
 		} finally {
 			responseTimeLock.unlock();
