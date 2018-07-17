@@ -56,8 +56,6 @@ public class ArrivalRateTupleLoadGenerator extends AbstractLoadGenerator {
 	/** Arrival rates saved in a list. */
 	private List<ArrivalRateTuple> arrRates;
 
-	/** Amount of completed transactions. */
-	private long lastCompletedCount = 0;
 
 	/** Number of threads for generating load. */
 	private static int numberOfThreads = 128;
@@ -119,8 +117,6 @@ public class ArrivalRateTupleLoadGenerator extends AbstractLoadGenerator {
 			 * of the time between two arrival rate tuples.
 			 */
 			int defaultMeanWaitTime = Math.min(10, (int) (arrRates.get(0).getTimeStamp() * 1000) / 10);
-			
-			lastCompletedCount = 0;
 			
 			clearResultTracker();
 			
@@ -290,23 +286,17 @@ public class ArrivalRateTupleLoadGenerator extends AbstractLoadGenerator {
 	 * @param actualtime The actual time of execution.
 	 */
 	private void sendBatchDataToDirector(double targettime, int loadintensity, double actualtime) {
-		long currentCompletedCount = executor.getCompletedTaskCount();
-		long invalidTransactionCount = ResultTracker.TRACKER.getAndResetInvalidTransactionCount();
-		long droppedTransactionCount = ResultTracker.TRACKER.getAndResetDroppedTransactionCount();
-		double avgResponseTime = ResultTracker.TRACKER.getAverageResponseTimeInS();
-		sendToDirector(targettime, loadintensity,
-				(currentCompletedCount - lastCompletedCount - invalidTransactionCount - droppedTransactionCount),
-				avgResponseTime, invalidTransactionCount, droppedTransactionCount, actualtime);
-		lastCompletedCount = currentCompletedCount;
+		ResultTracker.IntervalResult result = ResultTracker.TRACKER.retreiveIntervalResultAndReset();
+		sendToDirector(targettime, loadintensity, result.getSuccessfulTransactions(),
+				result.getAverageResponseTimeInS(), result.getFailedTransactions(),
+				result.getDroppedTransactions(), actualtime);
 	}
 	
 	/**
 	 * Clear the result tracker. Use at beginning of the measurement phase.
 	 */
 	private void clearResultTracker() {
-		ResultTracker.TRACKER.getAndResetInvalidTransactionCount();
-		ResultTracker.TRACKER.getAndResetDroppedTransactionCount();
-		ResultTracker.TRACKER.getAverageResponseTimeInS();
+		ResultTracker.TRACKER.retreiveIntervalResultAndReset();
 	}
 
 	@Override
