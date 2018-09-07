@@ -19,7 +19,7 @@ import picocli.CommandLine.Command;
 import tools.descartes.dlim.httploadgenerator.generator.AbstractLoadGenerator;
 
 @Command(name = "loadgenerator", 
-header = "Run in director mode.",
+header = "Run in load generator mode.",
 showDefaultValues = true,
 customSynopsis = "@|bold java -jar httploadgenerator.jar |@@|red loadgenerator|@ [@|yellow <options>|@...]",
 description = "Runs the load generator in director mode. The director parses configuration files, "
