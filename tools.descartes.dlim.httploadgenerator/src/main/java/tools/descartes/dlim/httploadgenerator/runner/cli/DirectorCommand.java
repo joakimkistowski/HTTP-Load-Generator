@@ -47,13 +47,14 @@ public class DirectorCommand implements Runnable {
 	@Option(names = {"--power", "--poweraddress", "-p"},
 			paramLabel = "POWER_IP[:POWER_PORT]",
 			description="Adress of @|yellow p|@owerDaemon. Multiple addresses are "
-					+ "delimited with \",\". No address => no power measurements.")
-	private String[] powerAddress = {};
+					+ "delimited with \",\" (no white-spaces). No address => no power measurements.")
+	private String powerAddresses = null;
 	
 	@Option(names = {"--ip", "--adress", "--generator", "-s"},
 			paramLabel = "IP",
-			description="Adre@|yellow s|@s of load generator(s). Multiple addresses are delimited with \",\".")
-	private String[] generator = {IRunnerConstants.LOCALHOST_IP};
+			description="Adre@|yellow s|@s of load generator(s). Multiple addresses are delimited with \",\" "
+					+ "(no white-spaces).")
+	private String generators = IRunnerConstants.LOCALHOST_IP;
 	
 	@Option(names = {"--randomseed", "--random", "--seed", "-r"},
 			paramLabel = "SEED",
@@ -110,7 +111,7 @@ public class DirectorCommand implements Runnable {
 
 	@Override
 	public void run() {
-		Director.executeDirector(profilePath, outName, powerAddress, generator,
+		Director.executeDirector(profilePath, outName, powerAddresses, generators,
 				randomSeed, threadCount, urlTimeout, scriptPath, randomizeUsers, warmupRate, warmupDuration,
 				warmupPause, powerCommunicatorClassName);
 	}

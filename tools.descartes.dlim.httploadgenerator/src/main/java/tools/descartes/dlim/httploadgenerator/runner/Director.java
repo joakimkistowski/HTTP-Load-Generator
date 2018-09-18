@@ -63,8 +63,8 @@ public class Director extends Thread {
 	 * 		False if they should be taken from a queue in order.
 	 * @param powerCommunicatorClassName Fully qualified class name of the power communicator class.
 	 */
-	public static void executeDirector(String profilePath, String outName, String[] powerAddresses,
-			String[] generators, int randomSeed, int threadCount, int urlTimeout, String scriptPath,
+	public static void executeDirector(String profilePath, String outName, String powerAddresses,
+			String generators, int randomSeed, int threadCount, int urlTimeout, String scriptPath,
 			boolean randomizeUsers, double warmupRate, int warmupDurationS,
 			int warmupPauseS, String powerCommunicatorClassName) {
 			List<IPowerCommunicator> powerCommunicators = new LinkedList<>();
@@ -78,16 +78,19 @@ public class Director extends Thread {
 				return;
 			}
 
+			String[] generatorIPs = generators.split(",");
+			String[] powerIPs = powerAddresses.split(",");
+			
 			//Power measurement
 			if (powerCommunicatorClassName != null && !powerCommunicatorClassName.trim().isEmpty()
-					&& powerAddresses != null && !(powerAddresses.length == 0)) {
-				initializePowerCommunicators(powerCommunicators, powerCommunicatorClassName, powerAddresses);
+					&& powerIPs != null && !(powerIPs.length == 0)) {
+				initializePowerCommunicators(powerCommunicators, powerCommunicatorClassName, powerIPs);
 			} else if (powerCommunicatorClassName != null && !powerCommunicatorClassName.trim().isEmpty()
-					&& (powerAddresses == null || powerAddresses.length == 0)) {
+					&& (powerIPs == null || powerIPs.length == 0)) {
 				LOG.warning("Power Communicator class provided, but no power communication address specified."
 						+ " No power measurements will be performed.");
 			} else if ((powerCommunicatorClassName == null || powerCommunicatorClassName.trim().isEmpty())
-						&& powerAddresses != null && !(powerAddresses.length == 0)) {
+						&& powerIPs != null && !(powerIPs.length == 0)) {
 					LOG.warning("Power communication address specified but no Power Communicator class provided."
 							+ " No power measurements will be performed.");
 			} else {
@@ -112,7 +115,7 @@ public class Director extends Thread {
 			LOG.info("Using Lua Script: " + scriptPathRead);
 
 			if (file != null && outName != null && !outName.isEmpty()) {
-				Director director = new Director(generators);
+				Director director = new Director(generatorIPs);
 				director.process(file, outName, randomBatchTimes,
 						threadCount, urlTimeout, scriptPathRead,
 						warmupDurationS, warmupRate, warmupPauseS, randomizeUsers,
