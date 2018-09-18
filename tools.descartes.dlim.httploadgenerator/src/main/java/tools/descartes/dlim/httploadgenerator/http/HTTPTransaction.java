@@ -94,6 +94,7 @@ public class HTTPTransaction extends Transaction {
 		} catch (InterruptedException e) {
 			LOG.log(Level.SEVERE, "InterruptedException: " + e.getMessage());
 			generator.revertLastCall();
+			throw new TransactionInvalidException("InterruptedException: " + e.getMessage());
 		}
 		return 0;
 	}

@@ -82,6 +82,14 @@ public class Director extends Thread {
 			if (powerCommunicatorClassName != null && !powerCommunicatorClassName.trim().isEmpty()
 					&& powerAddresses != null && !(powerAddresses.length == 0)) {
 				initializePowerCommunicators(powerCommunicators, powerCommunicatorClassName, powerAddresses);
+			} else if (powerCommunicatorClassName != null && !powerCommunicatorClassName.trim().isEmpty()
+					&& (powerAddresses == null || powerAddresses.length == 0)) {
+				LOG.warning("Power Communicator class provided, but no power communication address specified."
+						+ " No power measurements will be performed.");
+			} else if ((powerCommunicatorClassName == null || powerCommunicatorClassName.trim().isEmpty())
+						&& powerAddresses != null && !(powerAddresses.length == 0)) {
+					LOG.warning("Power communication address specified but no Power Communicator class provided."
+							+ " No power measurements will be performed.");
 			} else {
 				LOG.warning("No power measurements");
 			}
