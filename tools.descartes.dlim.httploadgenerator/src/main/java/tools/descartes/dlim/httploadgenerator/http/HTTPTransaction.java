@@ -86,9 +86,11 @@ public class HTTPTransaction extends Transaction {
 				LOG.log(Level.SEVERE, "ExecutionException in call for URL: " + url + "; Cause: " + e.getCause().toString());
 			}
 			generator.revertLastCall();
+			throw new TransactionInvalidException("ExecutionException: " + e.getMessage());
 		} catch (CancellationException e) {
 			LOG.log(Level.SEVERE, "CancellationException: " + url + "; " + e.getMessage());
 			generator.revertLastCall();
+			throw new TransactionInvalidException("CancellationException: " + e.getMessage());
 		} catch (InterruptedException e) {
 			LOG.log(Level.SEVERE, "InterruptedException: " + e.getMessage());
 			generator.revertLastCall();
