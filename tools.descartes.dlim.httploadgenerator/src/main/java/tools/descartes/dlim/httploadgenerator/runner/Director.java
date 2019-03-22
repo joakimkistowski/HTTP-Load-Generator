@@ -79,7 +79,10 @@ public class Director extends Thread {
 			}
 
 			String[] generatorIPs = generators.split(",");
-			String[] powerIPs = powerAddresses.split(",");
+			String[] powerIPs = new String[0];
+			if (powerAddresses != null && !powerAddresses.isEmpty()) {
+				powerIPs = powerAddresses.split(",");
+			}
 			
 			//Power measurement
 			if (powerCommunicatorClassName != null && !powerCommunicatorClassName.trim().isEmpty()
