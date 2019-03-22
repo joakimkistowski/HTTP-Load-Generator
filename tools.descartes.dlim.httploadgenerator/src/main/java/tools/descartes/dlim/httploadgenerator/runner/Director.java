@@ -80,7 +80,7 @@ public class Director extends Thread {
 
 			String[] generatorIPs = generators.split(",");
 			String[] powerIPs = null;
-			if (powerAddresses != null) {
+			if (powerAddresses != null && !powerAddresses.isEmpty()) {
 				powerIPs = powerAddresses.split(",");
 			}
 			
